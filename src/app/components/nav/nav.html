@@ -1,0 +1,20 @@
+<nav class="nav" *ngIf="showNav">
+  <div class="nav-inner">
+    <a routerLink="/" class="nav-logo">
+      <div class="nav-logo-mark">📖</div>
+      ReadWise
+    </a>
+
+    <div class="nav-links" *ngIf="isStudent">
+      <button class="nav-link" [class.active]="currentUrl==='/student'" (click)="router.navigate(['/student'])">📝 Practice</button>
+      <div class="nav-badge">🔥 {{ user?.points ?? 0 }} pts</div>
+      <button class="nav-link danger" (click)="auth.logout()">Sign Out</button>
+    </div>
+
+    <div class="nav-links" *ngIf="isTeacher">
+      <span class="nav-badge" style="background:var(--purple-50);border-color:var(--purple-100);color:var(--purple-600);">🍎 Teacher Portal</span>
+      <div class="nav-badge">{{ user?.name }}</div>
+      <button class="nav-link danger" (click)="auth.logout()">Sign Out</button>
+    </div>
+  </div>
+</nav>

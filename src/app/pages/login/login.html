@@ -1,0 +1,113 @@
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-brand">
+      <div class="hero-brand-mark">📖</div>
+      <div class="hero-brand-name">ReadWise</div>
+    </div>
+
+    <div class="hero-tag">✨ AI-Powered Learning</div>
+    <h1 class="hero-title">Build your<br><span>reading</span><br>superpowers</h1>
+    <p class="hero-sub">Personalized comprehension practice with instant AI feedback. For students grades 2–8.</p>
+
+    <!-- Landing -->
+    <div *ngIf="view === 'landing'" class="hero-actions">
+      <button class="btn btn-primary btn-lg w-full" (click)="show('login')">🚀 Sign In</button>
+      <button class="btn btn-secondary btn-lg w-full" (click)="show('register')">✏️ Create Account</button>
+    </div>
+
+    <!-- Login -->
+    <div class="auth-card" *ngIf="view === 'login'">
+      <div class="auth-card-header">
+        <h2>Welcome back!</h2>
+        <button class="close-btn" (click)="show('landing')">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" [(ngModel)]="loginEmail" placeholder="you@school.edu" (keyup.enter)="doLogin()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" [(ngModel)]="loginPassword" placeholder="••••••••" (keyup.enter)="doLogin()">
+      </div>
+      <div class="form-error" *ngIf="loginErr">{{ loginErr }}</div>
+      <button class="btn btn-primary w-full mt-16" (click)="doLogin()">Sign In →</button>
+      <div class="divider-or">or</div>
+      <button class="btn btn-secondary w-full" (click)="show('register')">Create a new account</button>
+      <div class="demo-links">
+        <button class="demo-btn student" (click)="demoLogin('student')">Try as Student Demo</button>
+        <button class="demo-btn teacher" (click)="demoLogin('teacher')">Try as Teacher Demo</button>
+      </div>
+    </div>
+
+    <!-- Register -->
+    <div class="auth-card" *ngIf="view === 'register'">
+      <div class="auth-card-header">
+        <h2>Create account</h2>
+        <button class="close-btn" (click)="show('landing')">×</button>
+      </div>
+      <div class="role-toggle">
+        <button class="role-btn" [class.active]="role==='student'" (click)="role='student'">🎒 Student</button>
+        <button class="role-btn" [class.active]="role==='teacher'" (click)="role='teacher'">🍎 Teacher</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" [(ngModel)]="regName" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" [(ngModel)]="regEmail" placeholder="you@school.edu">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" [(ngModel)]="regPassword" placeholder="Min 6 characters">
+      </div>
+      <div class="form-group" *ngIf="role==='student'">
+        <label class="form-label">Class Code <span class="optional">(from your teacher)</span></label>
+        <input class="form-input" type="text" [(ngModel)]="regClassCode" placeholder="e.g. CLS4XY2">
+        <span class="form-hint">Optional — join your class later</span>
+      </div>
+      <div class="form-error" *ngIf="regErr">{{ regErr }}</div>
+      <button class="btn btn-primary w-full mt-16" (click)="doRegister()">Create Account →</button>
+      <div class="divider-or">or</div>
+      <button class="btn btn-secondary w-full" (click)="show('login')">Sign in to existing account</button>
+    </div>
+
+    <!-- Features -->
+    <div class="features" *ngIf="view === 'landing'">
+      <div class="feature"><div class="feature-icon teal">🤖</div><div class="feature-text"><h4>AI Feedback</h4><p>Instant personalized coaching</p></div></div>
+      <div class="feature"><div class="feature-icon purple">📊</div><div class="feature-text"><h4>Progress Tracking</h4><p>Full performance reports</p></div></div>
+      <div class="feature"><div class="feature-icon amber">🏆</div><div class="feature-text"><h4>Badges & Points</h4><p>Stay motivated every day</p></div></div>
+      <div class="feature"><div class="feature-icon blue">🍎</div><div class="feature-text"><h4>Teacher Portal</h4><p>Assign & track your class</p></div></div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="floating-badge fb1">🔥 42 points today!</div>
+    <div class="visual-card main-card">
+      <div class="vc-header">
+        <div class="vc-dot teal"></div>
+        <span class="vc-title">The Water Cycle</span>
+        <span class="tag tag-teal small">Grade 4</span>
+      </div>
+      <div class="vc-lines">
+        <div class="vc-line" style="width:100%"></div>
+        <div class="vc-line" style="width:88%"></div>
+        <div class="vc-line" style="width:95%"></div>
+        <div class="vc-line" style="width:75%"></div>
+      </div>
+      <div class="vc-score">
+        <div class="vc-score-num">4/4 ⭐</div>
+        <div class="vc-score-label">Perfect Score!</div>
+      </div>
+    </div>
+    <div class="visual-card mini-card">
+      <div class="vc-header"><div class="vc-dot purple"></div><span class="vc-title">Vocab Builder</span></div>
+      <div class="mini-vocab">
+        <div class="vocab-chip coral">evaporation ✓</div>
+        <div class="vocab-chip teal">condensation ✓</div>
+        <div class="vocab-chip gray">precipitation...</div>
+      </div>
+    </div>
+    <div class="floating-badge fb2">🏆 New badge earned!</div>
+  </div>
+</div>

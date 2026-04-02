@@ -1,0 +1,250 @@
+<div class="teacher-wrap">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-section-label">Overview</div>
+    <button class="sb-link" [class.active]="section==='dashboard'" (click)="showSection('dashboard')"><span>🏠</span> Dashboard</button>
+    <button class="sb-link" [class.active]="section==='students'||section==='studentDetail'" (click)="showSection('students')"><span>👩‍🎓</span> My Students</button>
+    <button class="sb-link" [class.active]="section==='leaderboard'" (click)="showSection('leaderboard')"><span>🏆</span> Leaderboard</button>
+    <div class="sb-section-label">Content</div>
+    <button class="sb-link" [class.active]="section==='passages'" (click)="showSection('passages')"><span>📝</span> Custom Passages</button>
+    <button class="sb-link" [class.active]="section==='reports'" (click)="showSection('reports')"><span>📊</span> Class Reports</button>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ══ DASHBOARD ═══════════════════════════════════════════════ -->
+    <div *ngIf="section==='dashboard'">
+      <h2 class="page-title">{{ greeting() }}</h2>
+      <p class="muted mb-24">Here's your class at a glance.</p>
+
+      <div class="class-code-box">
+        <div>
+          <div class="cc-label">Your Class Code</div>
+          <div class="cc-code">{{ teacher.classCode }}</div>
+          <div class="muted sm mt-4">Share this with your students to join your class</div>
+        </div>
+        <button class="btn btn-secondary" (click)="copyCode()">📋 Copy Code</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">{{ students.length }}</div><div class="stat-label">Students</div></div>
+        <div class="stat-card"><div class="stat-num">{{ allSessions.length }}</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-card"><div class="stat-num">{{ classAvgScore }}%</div><div class="stat-label">Avg Score</div></div>
+        <div class="stat-card"><div class="stat-num">{{ activeToday }}</div><div class="stat-label">Active Today</div></div>
+      </div>
+
+      <div class="grid-2 mt-24">
+        <div>
+          <h3 class="mb-14">Recent Activity</h3>
+          <p class="muted" *ngIf="!recentActivity.length">No student activity yet.</p>
+          <div *ngFor="let s of recentActivity" class="session-row">
+            <span class="session-icon">{{ s.type==='qa'?'❓':s.type==='vocab'?'💬':'✏️' }}</span>
+            <div class="session-info">
+              <div class="fw-700 sm-text">{{ s.title||'Untitled' }}</div>
+              <div class="muted">{{ s.type }} · {{ timeAgo(s.ts) }}</div>
+            </div>
+            <span class="tag tag-teal">+{{ s.points||0 }}</span>
+          </div>
+        </div>
+        <div>
+          <h3 class="mb-14">Class Performance</h3>
+          <div class="card">
+            <div *ngFor="let type of ['qa','vocab','summary']" class="skill-bar-wrap">
+              <div class="skill-bar-header">
+                <span>{{ type==='qa'?'Comprehension':type==='vocab'?'Vocabulary':'Summarization' }}</span>
+                <span class="skill-pct" [ngClass]="type">{{ classSkillPct(type) }}%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" [ngClass]="type+'-fill'" [style.width.%]="classSkillPct(type)"></div></div>
+              <div class="muted sm">{{ allSessions.filter(s=>s.type===type).length }} sessions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STUDENTS ══════════════════════════════════════════════════ -->
+    <div *ngIf="section==='students'">
+      <h2 class="page-title mb-4">My Students</h2>
+      <p class="muted mb-20">Click a student to see their full progress report</p>
+      <div class="card p-0">
+        <table class="student-table">
+          <thead><tr>
+            <th>Student</th><th>Points</th><th>Sessions</th><th>Avg Score</th><th>Last Active</th><th>Badges</th>
+          </tr></thead>
+          <tbody>
+            <tr *ngIf="!students.length"><td colspan="6"><div class="empty-state"><div class="es-icon">👩‍🎓</div><p>No students yet. Share code: <strong>{{ teacher.classCode }}</strong></p></div></td></tr>
+            <tr *ngFor="let s of students" class="clickable" (click)="showStudentDetail(s.id)">
+              <td><div class="fw-700">{{ s.name }}</div><div class="muted sm">{{ s.email }}</div></td>
+              <td><strong class="teal-text">{{ s.points||0 }}</strong></td>
+              <td>{{ (s.sessions||[]).length }}</td>
+              <td [class]="studentAvgScore(s)>=80?'green-text fw-700':studentAvgScore(s)>=60?'blue-text fw-700':'red-text fw-700'">
+                {{ (s.sessions||[]).filter(x=>x.type==='qa').length ? studentAvgScore(s)+'%' : '—' }}
+              </td>
+              <td class="muted">{{ timeAgo(s.lastActive) }}</td>
+              <td>{{ (s.badges||[]).length }} 🏅</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ STUDENT DETAIL ══════════════════════════════════════════ -->
+    <div *ngIf="section==='studentDetail' && selectedStudent">
+      <button class="btn btn-ghost btn-sm mb-20" (click)="showSection('students')">← Back to students</button>
+      <div class="detail-header">
+        <div class="detail-avatar">{{ getInitials(selectedStudent.name) }}</div>
+        <div>
+          <h2>{{ selectedStudent.name }}</h2>
+          <p class="muted">{{ selectedStudent.email }}</p>
+        </div>
+        <div class="detail-tags">
+          <span class="tag tag-teal">🔥 {{ selectedStudent.points||0 }} pts</span>
+          <span class="tag tag-amber">🏅 {{ (selectedStudent.badges||[]).length }} badges</span>
+        </div>
+      </div>
+
+      <div class="stat-grid mb-24">
+        <div class="stat-card"><div class="stat-num">{{ (selectedStudent.sessions||[]).length }}</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-card"><div class="stat-num">{{ studentAvgScore(selectedStudent) }}%</div><div class="stat-label">Avg Score</div></div>
+        <div class="stat-card"><div class="stat-num">{{ selectedStudent.points||0 }}</div><div class="stat-label">Points</div></div>
+        <div class="stat-card"><div class="stat-num">{{ round(((selectedStudent.totalTime)||0)/60000) }}m</div><div class="stat-label">Reading Time</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3 class="mb-14">Skill Breakdown</h3>
+          <div class="card">
+            <div *ngFor="let type of ['qa','vocab','summary']" class="skill-bar-wrap">
+              <div class="skill-bar-header">
+                <span>{{ type==='qa'?'Comprehension':type==='vocab'?'Vocabulary':'Summarization' }}</span>
+                <span class="skill-pct" [ngClass]="type">{{ studentSkillPct(selectedStudent, type) }}%</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" [ngClass]="type+'-fill'" [style.width.%]="studentSkillPct(selectedStudent, type)"></div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="mb-14">Badges Earned</h3>
+          <ng-container *ngFor="let b of allBadges()">
+            <div class="session-row" *ngIf="hasBadge(selectedStudent, b.id)">
+              <span class="session-icon">{{ b.icon }}</span>
+              <div class="session-info"><div class="fw-700">{{ b.name }}</div><div class="muted">{{ b.desc }}</div></div>
+            </div>
+          </ng-container>
+          <p class="muted" *ngIf="!(selectedStudent.badges||[]).length">No badges yet.</p>
+        </div>
+      </div>
+
+      <div class="mt-24">
+        <h3 class="mb-14">Session History</h3>
+        <p class="muted" *ngIf="!(selectedStudent.sessions||[]).length">No sessions recorded yet.</p>
+        <div *ngFor="let s of (selectedStudent.sessions||[]).slice().reverse().slice(0,12)" class="session-row">
+          <span class="session-icon">{{ s.type==='qa'?'❓':s.type==='vocab'?'💬':'✏️' }}</span>
+          <div class="session-info">
+            <div class="fw-700">{{ s.title }}</div>
+            <div class="muted">{{ s.type==='qa'?'Score: '+s.score+'%':s.type==='vocab'?'Vocabulary':'Summary' }} · {{ timeAgo(s.ts) }}</div>
+          </div>
+          <span class="tag" [ngClass]="s.type==='qa'&&(s.score??0)>=80?'tag-teal':s.type==='qa'&&(s.score??0)>=60?'tag-blue':'tag-gray'">+{{ s.points }} pts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LEADERBOARD ══════════════════════════════════════════════ -->
+    <div *ngIf="section==='leaderboard'">
+      <h2 class="page-title mb-4">Class Leaderboard</h2>
+      <p class="muted mb-24">Top performers</p>
+      <div *ngIf="!students.length" class="empty-state"><div class="es-icon">🏆</div><p>No students in your class yet.</p></div>
+      <div *ngFor="let s of students; let i=index" class="lb-row">
+        <div class="lb-rank" [ngClass]="rankClass(i)">{{ medalFor(i) }}</div>
+        <div class="lb-info">
+          <div class="fw-700">{{ s.name }}</div>
+          <div class="muted">{{ (s.sessions||[]).length }} sessions · {{ (s.badges||[]).length }} badges</div>
+        </div>
+        <div class="lb-pts">{{ s.points||0 }} pts</div>
+      </div>
+    </div>
+
+    <!-- ══ PASSAGES ══════════════════════════════════════════════════ -->
+    <div *ngIf="section==='passages'">
+      <h2 class="page-title mb-4">Custom Passages</h2>
+      <p class="muted mb-24">Create or AI-generate passages for your class</p>
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="card mb-16">
+            <h3 class="mb-16">✍️ Write a Passage</h3>
+            <div class="form-group"><label class="form-label">Title</label><input class="form-input" [(ngModel)]="cpTitle" placeholder="e.g. The Life of Bees"></div>
+            <div class="form-group"><label class="form-label">Passage Text</label><textarea class="form-textarea" [(ngModel)]="cpText" rows="5" placeholder="Paste or type the passage here…"></textarea></div>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Grade Level</label><select class="form-select" [(ngModel)]="cpLevel"><option value="elementary">Elementary (Gr 2–5)</option><option value="middle">Middle (Gr 6–8)</option></select></div>
+              <div class="form-group"><label class="form-label">Topic</label><input class="form-input" [(ngModel)]="cpTopic" placeholder="e.g. Science"></div>
+            </div>
+            <button class="btn btn-primary w-full" (click)="saveCustomPassage()">💾 Save Passage</button>
+          </div>
+          <div class="card">
+            <h3 class="mb-12">🤖 AI Generate a Passage</h3>
+            <div class="form-group"><label class="form-label">Topic or prompt</label><input class="form-input" [(ngModel)]="genTopic" placeholder="e.g. Monarch butterflies migration"></div>
+            <div class="form-group"><label class="form-label">Grade Level</label><select class="form-select" [(ngModel)]="genLevel"><option value="elementary">Elementary (Gr 2–5)</option><option value="middle">Middle (Gr 6–8)</option></select></div>
+            <button class="btn btn-purple w-full" [disabled]="genLoading" (click)="generatePassage()">
+              <span *ngIf="!genLoading">✨ Generate with AI</span>
+              <span *ngIf="genLoading" class="spinner"></span><span *ngIf="genLoading">Generating…</span>
+            </button>
+            <div class="passage-preview" *ngIf="generatedPassage">{{ generatedPassage.text }}</div>
+            <button class="btn btn-secondary w-full mt-12" *ngIf="generatedPassage" (click)="saveGenPassage()">💾 Save This Passage</button>
+          </div>
+        </div>
+        <div>
+          <h3 class="mb-14">Saved Passages <span class="tag tag-gray">{{ savedPassages.length }}</span></h3>
+          <p class="muted" *ngIf="!savedPassages.length">No saved passages yet.</p>
+          <div *ngFor="let p of savedPassages; let i=index" class="saved-passage">
+            <span class="sp-icon">📄</span>
+            <div class="sp-info">
+              <div class="sp-title">{{ p.title }}</div>
+              <div class="sp-meta">{{ p.level }} · {{ p.topic }} · {{ wordCount(p.text) }} words</div>
+            </div>
+            <button class="delete-btn" (click)="deletePassage(i)">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REPORTS ══════════════════════════════════════════════════ -->
+    <div *ngIf="section==='reports'">
+      <h2 class="page-title mb-4">Class Reports</h2>
+      <p class="muted mb-24">Aggregate performance data</p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">{{ students.length }}</div><div class="stat-label">Students</div></div>
+        <div class="stat-card"><div class="stat-num">{{ allSessions.length }}</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-card"><div class="stat-num">{{ classAvgScore }}%</div><div class="stat-label">Class Avg</div></div>
+        <div class="stat-card"><div class="stat-num">{{ round(allSessions.reduce((a,s)=>a+(s.duration||0),0)/60000) }}m</div><div class="stat-label">Reading Time</div></div>
+        <div class="stat-card"><div class="stat-num">{{ students.filter(s=>studentAvgScore(s)>=80).length }}</div><div class="stat-label">High Scorers</div></div>
+      </div>
+
+      <div class="mt-24">
+        <h3 class="mb-14">Activity Distribution</h3>
+        <div class="card">
+          <div *ngFor="let type of ['qa','vocab','summary']" class="skill-bar-wrap">
+            <div class="skill-bar-header">
+              <span>{{ type==='qa'?'Comprehension Q&A':type==='vocab'?'Vocabulary':' Summarization' }}</span>
+              <span class="skill-pct" [ngClass]="type">{{ allSessions.filter(s=>s.type===type).length }} sessions</span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" [ngClass]="type+'-fill'" [style.width.%]="classSkillPct(type)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-24">
+        <h3 class="mb-14">Students Needing Attention</h3>
+        <div class="card p-16" *ngIf="!needsAttention.length" style="color:var(--green-600);font-weight:700;">🎉 All students are performing well!</div>
+        <div *ngFor="let s of needsAttention" class="session-row attention-row">
+          <span class="session-icon">⚠️</span>
+          <div class="session-info"><div class="fw-700">{{ s.name }}</div><div class="muted">{{ needsReason(s) }}</div></div>
+          <button class="btn btn-ghost btn-sm" (click)="showStudentDetail(s.id)">View →</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" [class.show]="!!toastMsg">{{ toastMsg }}</div>

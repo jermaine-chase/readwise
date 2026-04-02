@@ -1,0 +1,243 @@
+<div class="page-wrap">
+  <!-- SIDEBAR NAV -->
+  <aside class="sidebar">
+    <button class="sb-link" [class.active]="page==='practice'" (click)="showPage('practice')"><span>📝</span> Practice</button>
+    <button class="sb-link" [class.active]="page==='progress'" (click)="showPage('progress')"><span>📊</span> My Progress</button>
+    <button class="sb-link" [class.active]="page==='badges'" (click)="showPage('badges')"><span>🏆</span> Badges</button>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ══ PRACTICE ══════════════════════════════════════════════════ -->
+    <div *ngIf="page==='practice'">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">{{ greeting() }}</h1>
+          <p class="muted">Choose an activity and start reading.</p>
+        </div>
+        <div class="header-controls">
+          <select class="form-select" [(ngModel)]="level" (change)="passage=null">
+            <option value="elementary">Elementary (Gr 2–5)</option>
+            <option value="middle">Middle School (Gr 6–8)</option>
+          </select>
+          <button class="btn btn-primary" [disabled]="passageLoading" (click)="loadPassage()">
+            <span *ngIf="!passageLoading">🎲 New Passage</span>
+            <span *ngIf="passageLoading" class="spinner"></span>
+            <span *ngIf="passageLoading">Loading…</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mode Tabs -->
+      <div class="mode-tabs">
+        <button class="mode-tab" [class.active]="mode==='qa'" (click)="mode='qa'"><span class="ti">❓</span>Questions</button>
+        <button class="mode-tab" [class.active]="mode==='vocab'" (click)="mode='vocab'"><span class="ti">💬</span>Vocabulary</button>
+        <button class="mode-tab" [class.active]="mode==='summary'" (click)="mode='summary'"><span class="ti">✏️</span>Summarize</button>
+      </div>
+
+      <!-- Passage Card -->
+      <div class="passage-card">
+        <div class="passage-label">Reading Passage</div>
+        <div class="passage-title">{{ passage ? passage.title : 'Click "New Passage" to begin!' }}</div>
+        <div class="passage-body">
+          <span *ngIf="!passage">Select a grade level, choose an activity mode, then click <strong>New Passage</strong> to load a reading passage and start your comprehension practice!</span>
+          <span *ngIf="passage">{{ passage.text }}</span>
+        </div>
+        <div class="passage-meta" *ngIf="passage">
+          <span class="tag tag-teal">{{ passage.level }}</span>
+          <span class="tag tag-purple">{{ passage.topic }}</span>
+          <span class="tag tag-gray">~{{ passage.wordCount }} words</span>
+        </div>
+      </div>
+
+      <!-- ── Q&A ───────────────────────────────────────────────────── -->
+      <div class="card" *ngIf="mode==='qa'">
+        <div class="act-label blue">❓ Comprehension Questions</div>
+        <div class="q-dots" *ngIf="passage">
+          <div *ngFor="let q of passage.questions; let i=index" class="q-dot" [ngClass]="dotClass(i)"></div>
+        </div>
+        <p class="muted" *ngIf="!passage">Load a passage to see questions.</p>
+
+        <ng-container *ngIf="passage">
+          <div *ngFor="let q of passage.questions; let qi=index">
+            <div class="question-block">
+              <!-- Type badge -->
+              <div class="qtype-badge" [ngClass]="q.type">{{ q.type==='mc'?'Multiple Choice':q.type==='tf'?'True / False':q.type==='short'?'Short Answer':'Fill in the Blank' }}</div>
+              <div class="question-text">Q{{ qi+1 }}. {{ q.q }}</div>
+
+              <!-- Multiple Choice -->
+              <div *ngIf="q.type==='mc'" class="options">
+                <ng-container *ngFor="let opt of q.options; let oi=index">
+                  <ng-container *ngIf="['A','B','C','D'][oi] as letter">
+                    <button class="opt" [disabled]="!!answers[qi]"
+                      [class.correct]="!!answers[qi] && letter===q.answer"
+                      [class.wrong]="answers[qi]?.result==='wrong' && letter!==q.answer && letter===selectedMC[qi]"
+                      [class.locked]="!!answers[qi]"
+                      (click)="selectedMC[qi]=letter; answerMC(qi, letter)">
+                      <span class="opt-letter">{{ letter }}</span>{{ opt.replace(/^[A-D]\)\s*/,'') }}
+                    </button>
+                  </ng-container>
+                </ng-container>
+              </div>
+
+              <!-- True / False -->
+              <div *ngIf="q.type==='tf'" class="tf-btns">
+                <button class="tf-btn" [disabled]="!!answers[qi]"
+                  [class.correct]="!!answers[qi] && q.answer==='True'"
+                  [class.wrong]="answers[qi]?.result==='wrong' && q.answer!=='True'"
+                  (click)="answerTF(qi,'True')">✅ True</button>
+                <button class="tf-btn" [disabled]="!!answers[qi]"
+                  [class.correct]="!!answers[qi] && q.answer==='False'"
+                  [class.wrong]="answers[qi]?.result==='wrong' && q.answer!=='False'"
+                  (click)="answerTF(qi,'False')">❌ False</button>
+              </div>
+
+              <!-- Short Answer -->
+              <div *ngIf="q.type==='short'">
+                <input #shortInput class="short-input" placeholder="Type your answer here…"
+                  [disabled]="!!answers[qi]"
+                  [class.correct]="answers[qi]?.result==='correct'"
+                  [class.wrong]="answers[qi]?.result==='wrong'">
+                <button class="check-btn" *ngIf="!answers[qi]" (click)="checkShort(qi, shortInput)">Check Answer ✓</button>
+                <div class="fb-box" *ngIf="answers[qi]?.feedback"
+                  [ngClass]="answers[qi]?.result==='correct'?'good':answers[qi]?.result==='answered'?'ai':'needs'">
+                  <span *ngIf="answers[qi]?.loading">⏳ Checking…</span>
+                  <span *ngIf="!answers[qi]?.loading">{{ answers[qi]?.feedback }}</span>
+                </div>
+              </div>
+
+              <!-- Fill in the Blank -->
+              <div *ngIf="q.type==='fill'">
+                <div class="fill-text">
+                  {{ q.before }}<input #fillInput class="blank-input" [placeholder]="q.hint || '…'"
+                    [disabled]="!!answers[qi]"
+                    [class.correct]="answers[qi]?.result==='correct'"
+                    [class.wrong]="answers[qi]?.result==='wrong'">{{ q.after }}
+                </div>
+                <button class="check-btn mt-8" *ngIf="!answers[qi]" (click)="checkFill(qi, fillInput)">Check ✓</button>
+                <div class="fb-box" *ngIf="answers[qi]?.feedback"
+                  [ngClass]="answers[qi]?.result==='correct'?'good':'needs'">{{ answers[qi]?.feedback }}</div>
+              </div>
+            </div>
+            <div class="divider" *ngIf="qi < passage!.questions.length - 1"></div>
+          </div>
+        </ng-container>
+
+        <!-- Score Result -->
+        <div class="score-result" *ngIf="showScore">
+          <div class="score-big">{{ scoreEmoji }} {{ correctCount }}/{{ passage!.questions.length }}</div>
+          <div>
+            <div class="score-msg">{{ scoreMsg }}</div>
+            <div class="muted">{{ scorePct }}%</div>
+            <button class="btn btn-secondary btn-sm mt-8" (click)="loadPassage()">Try another →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VOCAB ──────────────────────────────────────────────────── -->
+      <div class="card" *ngIf="mode==='vocab'">
+        <div class="act-label coral">💬 Vocabulary Builder</div>
+        <p class="muted mb-16" *ngIf="passage">Tap each card to reveal the meaning</p>
+        <p class="muted" *ngIf="!passage">Load a passage to see vocabulary.</p>
+        <div class="vocab-grid" *ngIf="passage">
+          <div *ngFor="let w of passage.vocabulary; let i=index"
+            class="vocab-card" [class.flipped]="vocabFlipped[i]" (click)="flipVocab(i)">
+            <div class="vc-word">{{ w.word }}</div>
+            <div class="vc-hint" *ngIf="!vocabFlipped[i]">👆 Tap to reveal</div>
+            <div class="vc-def" *ngIf="vocabFlipped[i]">{{ w.definition }}</div>
+            <div class="vc-ex" *ngIf="vocabFlipped[i]">"{{ w.example }}"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUMMARY ────────────────────────────────────────────────── -->
+      <div class="card" *ngIf="mode==='summary'">
+        <div class="act-label purple">✏️ Write a Summary</div>
+        <p class="fw-600 mb-14">In your own words, write a short summary of the passage. Include the main idea and 2–3 key details.</p>
+        <textarea class="form-textarea" [(ngModel)]="summaryText" rows="5" placeholder="Start writing your summary here…"></textarea>
+        <p class="form-hint mt-8">💡 Tip: Don't copy sentences — use your own words!</p>
+        <button class="btn btn-purple mt-12" [disabled]="!summaryText.trim() || !passage || summaryLoading" (click)="checkSummary()">
+          <span *ngIf="!summaryLoading">✨ Get AI Feedback</span>
+          <span *ngIf="summaryLoading" class="spinner"></span>
+          <span *ngIf="summaryLoading">Checking…</span>
+        </button>
+        <div class="fb-box mt-12" *ngIf="summaryFeedback" [ngClass]="summaryFeedbackClass">
+          <strong>✨ AI Tutor Feedback</strong><br><br>{{ summaryFeedback }}
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROGRESS ═══════════════════════════════════════════════════ -->
+    <div *ngIf="page==='progress'">
+      <h2 class="page-title">My Progress</h2>
+      <p class="muted mb-24">Track your reading journey</p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">{{ sessions.length }}</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-card"><div class="stat-num">{{ avgScore }}%</div><div class="stat-label">Avg Score</div></div>
+        <div class="stat-card"><div class="stat-num">{{ user.points ?? 0 }}</div><div class="stat-label">Points</div></div>
+        <div class="stat-card"><div class="stat-num">{{ totalTimeMin }}m</div><div class="stat-label">Time Spent</div></div>
+        <div class="stat-card"><div class="stat-num">{{ sessions.filter(s=>s.type==='vocab').length }}</div><div class="stat-label">Vocab Sessions</div></div>
+        <div class="stat-card"><div class="stat-num">{{ (user.badges??[]).length }}</div><div class="stat-label">Badges</div></div>
+      </div>
+
+      <div class="mt-24">
+        <h3 class="mb-14">Skill Breakdown</h3>
+        <div class="card">
+          <div class="skill-bar-wrap">
+            <div class="skill-bar-header"><span>Comprehension (Q&A)</span><span class="skill-pct blue-text">{{ skillPct('qa') }}%</span></div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill blue-fill" [style.width.%]="skillPct('qa')"></div></div>
+            <div class="muted sm">{{ qaSessions.length }} Q&A sessions</div>
+          </div>
+          <div class="skill-bar-wrap">
+            <div class="skill-bar-header"><span>Vocabulary</span><span class="skill-pct coral-text">{{ skillPct('vocab') }}%</span></div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill coral-fill" [style.width.%]="skillPct('vocab')"></div></div>
+            <div class="muted sm">{{ sessions.filter(s=>s.type==='vocab').length }} vocab sessions</div>
+          </div>
+          <div class="skill-bar-wrap">
+            <div class="skill-bar-header"><span>Summarization</span><span class="skill-pct purple-text">{{ skillPct('summary') }}%</span></div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill purple-fill" [style.width.%]="skillPct('summary')"></div></div>
+            <div class="muted sm">{{ sessions.filter(s=>s.type==='summary').length }} summaries written</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-24">
+        <h3 class="mb-14">Recent Sessions</h3>
+        <p class="muted" *ngIf="!sessions.length">No sessions yet. Start practicing!</p>
+        <div *ngFor="let s of sessions.slice().reverse().slice(0,10)" class="session-row">
+          <span class="session-icon">{{ s.type==='qa'?'❓':s.type==='vocab'?'💬':'✏️' }}</span>
+          <div class="session-info">
+            <div class="fw-700">{{ s.title }}</div>
+            <div class="muted">{{ s.type==='qa'?'Score: '+s.score+'%':s.type==='vocab'?'Vocabulary practice':'Summary writing' }} · {{ timeAgo(s.ts) }}</div>
+          </div>
+          <span class="tag" [ngClass]="s.type==='qa'&&(s.score??0)>=80?'tag-teal':s.type==='qa'&&(s.score??0)>=60?'tag-blue':'tag-gray'">+{{ s.points }} pts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BADGES ══════════════════════════════════════════════════════ -->
+    <div *ngIf="page==='badges'">
+      <h2 class="page-title">My Badges</h2>
+      <p class="muted mb-24">Earn badges by completing challenges!</p>
+      <div class="badges-grid">
+        <div *ngFor="let b of allBadges()" class="badge-card" [class.earned]="hasBadge(b.id)">
+          <div class="badge-icon">{{ b.icon }}</div>
+          <div class="badge-name">{{ b.name }}</div>
+          <div class="badge-desc">{{ b.desc }}</div>
+          <span class="tag tag-teal earned-tag" *ngIf="hasBadge(b.id)">✓ Earned</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Badge Toast -->
+<div class="badge-toast" [class.show]="!!badgeToast">
+  <div class="bt-icon">{{ badgeToast?.icon }}</div>
+  <div>
+    <div class="bt-title">New Badge Earned!</div>
+    <div class="bt-name">{{ badgeToast?.name }}</div>
+  </div>
+</div>
