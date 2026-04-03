@@ -1,10 +1,10 @@
 # Readwise
 
-An AI-powered reading comprehension practice app for K–8 students, built with Angular 21 and the Claude API.
+An AI-powered reading comprehension practice app for K–8 students, built with Angular 21.
 
 ## Overview
 
-Readwise supports two roles — **students** and **teachers** — with role-based dashboards and an auth guard protecting each route. All data is persisted in `localStorage` (no backend required). AI features are powered by the Anthropic Claude API called directly from the browser.
+Readwise supports two roles — **students** and **teachers** — with role-based dashboards and an auth guard protecting each route. All data is persisted in `localStorage` (no backend required). AI features are powered by a configurable AI provider (Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or a local Ollama model) called directly from the browser.
 
 ### Student Features
 
@@ -28,16 +28,19 @@ Readwise supports two roles — **students** and **teachers** — with role-base
 
 ```
 src/app/
-├── components/nav/        # Shared nav bar
+├── components/
+│   ├── nav/               # Shared nav bar
+│   └── settings-panel/    # AI provider settings UI
 ├── guards/auth-guard.ts   # Role-based route protection
 ├── pages/
 │   ├── login/             # Login / register / demo login
 │   ├── student/           # Student dashboard
 │   └── teacher/           # Teacher dashboard
 └── services/
-    ├── api.ts             # Claude API integration (passage gen, grading, feedback)
-    ├── auth.ts            # Login, register, logout, demo login
-    └── storage.ts         # localStorage wrapper, session saving, badge logic
+    ├── ai-settings.service.ts  # AI provider config (persisted to localStorage)
+    ├── api.ts                  # AI integration (passage gen, grading, feedback)
+    ├── auth.ts                 # Login, register, logout, demo login
+    └── storage.ts              # localStorage wrapper, session saving, badge logic
 ```
 
 ## Getting Started
@@ -46,7 +49,7 @@ src/app/
 
 - Node.js 18+
 - npm 10+
-- An [Anthropic API key](https://console.anthropic.com/)
+- An API key for your chosen AI provider (see [AI Provider Setup](#ai-provider-setup) below)
 
 ### Install & Run
 
@@ -57,15 +60,24 @@ ng serve
 
 Navigate to `http://localhost:4200/`.
 
-### API Key
-
-The app calls the Claude API directly from the browser. You will need to supply your Anthropic API key via the request headers. Locate the `callClaude` method in [src/app/services/api.ts](src/app/services/api.ts) and add your key to the `x-api-key` header — or proxy requests through a backend to keep the key server-side.
-
-> **Note:** Exposing API keys in the browser is not recommended for production. Consider a thin server-side proxy for deployed environments.
-
 ### Demo Login
 
 On the login page, use the **"Demo Student"** or **"Demo Teacher"** buttons to auto-create and log in demo accounts without registration.
+
+## AI Provider Setup
+
+AI provider settings are configured in-app via the **Settings panel** (gear icon in the nav bar). Settings are saved to `localStorage` — no code changes needed.
+
+| Provider | Model used | Required fields |
+|---|---|---|
+| **Claude** (default) | `claude-sonnet-4-20250514` | API Key |
+| **OpenAI** | `gpt-4o` | API Key |
+| **Gemini** | `gemini-2.0-flash` | API Key |
+| **Azure OpenAI** | your deployment | API Key + Endpoint URL |
+| **DeepSeek** | `deepseek-chat` | API Key |
+| **Local (Ollama)** | configurable (default: `llama3.2`) | Endpoint URL (default: `http://localhost:11434/api/generate`) |
+
+> **Note:** API keys are stored in `localStorage` and sent directly from the browser. This is convenient for local use but not recommended for production deployments. Consider a thin server-side proxy to keep keys server-side.
 
 ## Scripts
 
@@ -83,4 +95,4 @@ On the login page, use the **"Demo Student"** or **"Demo Teacher"** buttons to a
 - **RxJS 7.8**
 - **Vitest** (via Angular CLI test runner)
 - **Prettier** for code formatting
-- **Claude API** (`claude-sonnet-4-20250514`) for passage generation, short-answer grading, and summary feedback
+- **Multi-provider AI** — Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or local Ollama
