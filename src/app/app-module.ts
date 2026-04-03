@@ -9,9 +9,10 @@ import { Nav } from './components/nav/nav';
 import { Login } from './pages/login/login';
 import { Student } from './pages/student/student';
 import { Teacher } from './pages/teacher/teacher';
+import { SettingsPanel } from './components/settings-panel/settings-panel';
 
 @NgModule({
-  declarations: [App, Nav, Login, Student, Teacher],
+  declarations: [App, Nav, Login, Student, Teacher, SettingsPanel],
   imports: [BrowserModule, AppRoutingModule, FormsModule, HttpClientModule],
   providers: [provideBrowserGlobalErrorListeners()],
   bootstrap: [App],

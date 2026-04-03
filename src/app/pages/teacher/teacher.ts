@@ -3,7 +3,7 @@ import { AuthService } from '../../services/auth';
 import { StorageService, User, CustomPassage } from '../../services/storage';
 import { ApiService } from '../../services/api';
 
-type Section = 'dashboard' | 'students' | 'studentDetail' | 'leaderboard' | 'passages' | 'reports';
+type Section = 'dashboard' | 'students' | 'studentDetail' | 'leaderboard' | 'passages' | 'reports' | 'settings';
 
 @Component({
   standalone: false,

@@ -8,6 +8,8 @@
     <div class="sb-section-label">Content</div>
     <button class="sb-link" [class.active]="section==='passages'" (click)="showSection('passages')"><span>📝</span> Custom Passages</button>
     <button class="sb-link" [class.active]="section==='reports'" (click)="showSection('reports')"><span>📊</span> Class Reports</button>
+    <div class="sb-divider"></div>
+    <button class="sb-link" [class.active]="section==='settings'" (click)="showSection('settings')"><span>⚙️</span> AI Settings</button>
   </aside>
 
   <main class="main-content">
@@ -241,6 +243,11 @@
           <button class="btn btn-ghost btn-sm" (click)="showStudentDetail(s.id)">View →</button>
         </div>
       </div>
+    </div>
+
+    <!-- ══ SETTINGS ══════════════════════════════════════════════════════ -->
+    <div *ngIf="section==='settings'">
+      <app-settings-panel></app-settings-panel>
     </div>
 
   </main>

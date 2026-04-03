@@ -4,6 +4,7 @@
 .sb-link { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm); border:none; background:transparent; cursor:pointer; font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; color:var(--muted); width:100%; text-align:left; transition:all .15s; }
 .sb-link:hover { background:var(--gray-50); color:var(--text); }
 .sb-link.active { background:var(--teal-50); color:var(--teal-600); }
+.sb-divider { height:1px; background:var(--border); margin:8px 10px; }
 .main-content { flex:1; padding:28px 32px 80px; }
 @media(max-width:768px){.sidebar{display:none;}.main-content{padding:20px 16px 60px;}}
 

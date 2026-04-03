@@ -4,6 +4,8 @@
     <button class="sb-link" [class.active]="page==='practice'" (click)="showPage('practice')"><span>📝</span> Practice</button>
     <button class="sb-link" [class.active]="page==='progress'" (click)="showPage('progress')"><span>📊</span> My Progress</button>
     <button class="sb-link" [class.active]="page==='badges'" (click)="showPage('badges')"><span>🏆</span> Badges</button>
+    <div class="sb-divider"></div>
+    <button class="sb-link" [class.active]="page==='settings'" (click)="showPage('settings')"><span>⚙️</span> AI Settings</button>
   </aside>
 
   <main class="main-content">
@@ -228,6 +230,11 @@
           <span class="tag tag-teal earned-tag" *ngIf="hasBadge(b.id)">✓ Earned</span>
         </div>
       </div>
+    </div>
+
+    <!-- ══ SETTINGS ══════════════════════════════════════════════════════ -->
+    <div *ngIf="page==='settings'">
+      <app-settings-panel></app-settings-panel>
     </div>
 
   </main>

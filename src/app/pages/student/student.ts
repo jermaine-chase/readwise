@@ -4,7 +4,7 @@ import { StorageService, User, Badge } from '../../services/storage';
 import { ApiService, Passage } from '../../services/api';
 
 type Mode = 'qa' | 'vocab' | 'summary';
-type Page = 'practice' | 'progress' | 'badges';
+type Page = 'practice' | 'progress' | 'badges' | 'settings';
 interface AnswerState { result: 'correct' | 'wrong' | 'answered' | null; feedback?: string; loading?: boolean; }
 
 @Component({

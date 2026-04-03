@@ -1,0 +1,125 @@
+<div class="settings-wrap">
+  <h2 class="page-title">AI Settings</h2>
+  <p class="muted mb-24">Choose which AI provider powers this app and enter your API key.</p>
+
+  <!-- Provider Cards -->
+  <h3 class="mb-12">AI Provider</h3>
+  <div class="provider-grid">
+    <button
+      *ngFor="let p of providers"
+      class="provider-card"
+      [class.selected]="settings.provider === p.value"
+      (click)="settings.provider = p.value; onProviderChange()">
+      <div class="provider-icon">
+        <span *ngIf="p.value === 'claude'">🤖</span>
+        <span *ngIf="p.value === 'openai'">💬</span>
+        <span *ngIf="p.value === 'gemini'">✨</span>
+        <span *ngIf="p.value === 'azure'">☁️</span>
+        <span *ngIf="p.value === 'deepseek'">🐋</span>
+        <span *ngIf="p.value === 'local'">🖥️</span>
+      </div>
+      <div class="provider-info">
+        <div class="provider-name">{{ p.label }}</div>
+        <div class="provider-desc">{{ p.description }}</div>
+      </div>
+      <div class="provider-check" *ngIf="settings.provider === p.value">✓</div>
+    </button>
+  </div>
+
+  <!-- API Key / Local Config -->
+  <div class="card mt-24">
+
+    <!-- Local model fields -->
+    <ng-container *ngIf="settings.provider === 'local'">
+      <h3 class="mb-16">Local Model Configuration</h3>
+      <div class="form-group">
+        <label class="form-label">Server Endpoint</label>
+        <input
+          class="form-input"
+          type="text"
+          [(ngModel)]="settings.localEndpoint"
+          placeholder="http://localhost:11434/api/generate">
+        <p class="form-hint mt-4">
+          Ollama native API: <code>http://localhost:11434/api/generate</code><br>
+          Ollama OpenAI-compatible: <code>http://localhost:11434/v1/chat/completions</code>
+        </p>
+      </div>
+      <div class="form-group mt-12">
+        <label class="form-label">Model Name</label>
+        <input
+          class="form-input"
+          type="text"
+          [(ngModel)]="settings.localModel"
+          placeholder="e.g. llama3.2, mistral, phi4">
+        <p class="form-hint mt-4">Must match the model name as it appears in your local server.</p>
+      </div>
+    </ng-container>
+
+    <!-- API key (all cloud providers) -->
+    <ng-container *ngIf="settings.provider !== 'local'">
+      <h3 class="mb-16">{{ selectedProvider.keyLabel }}</h3>
+      <div class="key-input-wrap">
+        <input
+          class="form-input key-input"
+          [type]="showKey ? 'text' : 'password'"
+          [(ngModel)]="settings.apiKey"
+          [placeholder]="selectedProvider.keyPlaceholder">
+        <button class="show-btn" (click)="toggleShowKey()">{{ showKey ? '🙈 Hide' : '👁 Show' }}</button>
+      </div>
+      <p class="form-hint mt-8">
+        Your API key is stored only in your browser's local storage and never sent anywhere except directly to the AI provider.
+        <a class="link" [href]="selectedProvider.docsUrl" target="_blank" rel="noopener">Get an API key →</a>
+      </p>
+    </ng-container>
+
+    <!-- Azure Endpoint -->
+    <ng-container *ngIf="settings.provider === 'azure'">
+      <div class="form-group mt-16">
+        <label class="form-label">Azure OpenAI Endpoint</label>
+        <input
+          class="form-input"
+          type="text"
+          [(ngModel)]="settings.azureEndpoint"
+          placeholder="https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DEPLOYMENT/chat/completions?api-version=2024-02-01">
+        <p class="form-hint mt-4">The full deployment endpoint URL from your Azure portal.</p>
+      </div>
+    </ng-container>
+
+    <!-- Optional key for local -->
+    <ng-container *ngIf="settings.provider === 'local'">
+      <div class="form-group mt-12">
+        <label class="form-label">API Key <span class="muted">(optional)</span></label>
+        <div class="key-input-wrap">
+          <input
+            class="form-input key-input"
+            [type]="showKey ? 'text' : 'password'"
+            [(ngModel)]="settings.apiKey"
+            placeholder="Leave blank if not required">
+          <button class="show-btn" (click)="toggleShowKey()">{{ showKey ? '🙈 Hide' : '👁 Show' }}</button>
+        </div>
+        <p class="form-hint mt-4">Some local servers require an API key. Leave blank for default Ollama setups.</p>
+      </div>
+    </ng-container>
+
+    <button class="btn btn-primary mt-20" (click)="save()">
+      <span *ngIf="!saved">💾 Save Settings</span>
+      <span *ngIf="saved">✅ Saved!</span>
+    </button>
+  </div>
+
+  <!-- Info box -->
+  <div class="info-box mt-24" *ngIf="settings.provider !== 'local'">
+    <div class="info-icon">ℹ️</div>
+    <div>
+      <div class="fw-700 mb-4">API calls are made directly from your browser</div>
+      <p class="muted">This app calls AI APIs directly from the browser — no server involved. Your API key is only stored locally and sent directly to your chosen provider. Keep in mind some providers may charge per request based on usage.</p>
+    </div>
+  </div>
+  <div class="info-box mt-24" *ngIf="settings.provider === 'local'">
+    <div class="info-icon">🖥️</div>
+    <div>
+      <div class="fw-700 mb-4">Using a locally hosted model</div>
+      <p class="muted">Make sure your local AI server is running before generating passages. Ollama and LM Studio both expose an OpenAI-compatible endpoint. No data leaves your machine.</p>
+    </div>
+  </div>
+</div>
