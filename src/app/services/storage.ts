@@ -36,6 +36,8 @@ export interface CustomPassage {
   level: string;
   topic: string;
   createdAt: number;
+  questions?: any[];
+  vocabulary?: any[];
 }
 
 export interface Badge {

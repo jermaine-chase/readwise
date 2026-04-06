@@ -12,7 +12,7 @@
     </div>
 
     <div class="nav-links" *ngIf="isTeacher">
-      <span class="nav-badge" style="background:var(--purple-50);border-color:var(--purple-100);color:var(--purple-600);">🍎 Teacher Portal</span>
+      <span class="nav-badge" style="background:var(--purple-50);border-color:var(--purple-100);color:var(--purple-600);">🍎 Teacher/Parent Portal</span>
       <div class="nav-badge">{{ user?.name }}</div>
       <button class="nav-link danger" (click)="auth.logout()">Sign Out</button>
     </div>

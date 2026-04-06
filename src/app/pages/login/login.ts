@@ -38,6 +38,7 @@ export class Login implements OnInit {
     this.regErr = '';
     if (!this.regName || !this.regEmail || !this.regPassword) { this.regErr = 'Please fill in all fields.'; return; }
     if (this.regPassword.length < 6) { this.regErr = 'Password must be at least 6 characters.'; return; }
+    if (this.role === 'student' && !this.regClassCode.trim()) { this.regErr = 'A teacher/parent code is required to register as a student.'; return; }
     const res = this.auth.register(this.regName, this.regEmail, this.regPassword, this.role, this.regClassCode.toUpperCase() || undefined);
     if (res.err) { this.regErr = res.err; return; }
     this.router.navigate([res.user?.role === 'teacher' ? '/teacher' : '/student']);

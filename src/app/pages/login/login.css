@@ -24,6 +24,7 @@
 .feature-text h4 { font-size:13px; font-weight:800; color:var(--text); }
 .feature-text p { font-size:11px; color:var(--muted); font-weight:600; margin-top:1px; }
 .optional { color:var(--muted); font-weight:600; }
+.required { color:var(--red-500,#ef4444); font-weight:700; }
 .demo-links { display:flex; gap:12px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
 .demo-btn { background:none; border:none; cursor:pointer; font-size:12px; font-weight:700; font-family:'Nunito',sans-serif; }
 .demo-btn.student { color:var(--teal-600); } .demo-btn.teacher { color:var(--purple-600); }

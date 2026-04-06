@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth';
 import { StorageService, User, CustomPassage } from '../../services/storage';
-import { ApiService } from '../../services/api';
+import { ApiService, Passage, Question, VocabWord } from '../../services/api';
 
 type Section = 'dashboard' | 'students' | 'studentDetail' | 'leaderboard' | 'passages' | 'reports' | 'settings';
 
@@ -22,7 +22,7 @@ export class Teacher implements OnInit {
   cpTitle = ''; cpText = ''; cpLevel = 'elementary'; cpTopic = '';
   genTopic = ''; genLevel = 'elementary';
   genLoading = false;
-  generatedPassage: any = null;
+  generatedPassage: Passage | null = null;
 
   // Toast
   toastMsg = '';
@@ -112,10 +112,25 @@ export class Teacher implements OnInit {
 
   saveGenPassage() {
     if (!this.generatedPassage) return;
-    this.storage.saveCustomPassage(this.teacher.id, { ...this.generatedPassage, id: '', createdAt: Date.now() });
+    this.storage.saveCustomPassage(this.teacher.id, {
+      title: this.generatedPassage.title,
+      text: this.generatedPassage.text,
+      level: this.generatedPassage.level,
+      topic: this.generatedPassage.topic,
+      questions: this.generatedPassage.questions,
+      vocabulary: this.generatedPassage.vocabulary,
+      createdAt: Date.now()
+    });
     this.generatedPassage = null; this.genTopic = '';
     this.toast('✅ Passage saved!');
   }
+
+  getKeywords(q: Question): string { return (q.keywords ?? []).join(', '); }
+  setKeywords(q: Question, val: string) { q.keywords = val.split(',').map(s => s.trim()).filter(Boolean); }
+
+  addVocab() { this.generatedPassage?.vocabulary.push({ word: '', definition: '', example: '' }); }
+  removeVocab(i: number) { this.generatedPassage?.vocabulary.splice(i, 1); }
+  removeQuestion(i: number) { this.generatedPassage?.questions.splice(i, 1); }
 
   deletePassage(i: number) {
     const users = this.storage.getUsers();

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../services/auth';
 import { StorageService, User, Badge } from '../../services/storage';
 import { ApiService, Passage } from '../../services/api';
@@ -45,7 +45,7 @@ export class Student implements OnInit {
   get scoreEmoji() { return this.scorePct >= 90 ? '🏆' : this.scorePct >= 75 ? '🌟' : this.scorePct >= 60 ? '👍' : '💪'; }
   get scoreMsg() { return this.scorePct >= 90 ? 'Outstanding!' : this.scorePct >= 75 ? 'Great job!' : this.scorePct >= 60 ? 'Good effort!' : 'Keep practicing!'; }
 
-  constructor(private auth: AuthService, private storage: StorageService, private api: ApiService) {}
+  constructor(private auth: AuthService, private storage: StorageService, private api: ApiService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.user = this.auth.getCurrentUser()!;
@@ -70,6 +70,7 @@ export class Student implements OnInit {
       this.vocabFlipped = new Array(this.passage.vocabulary.length).fill(false);
     } catch (e) { console.error(e); }
     this.passageLoading = false;
+    this.cdr.detectChanges();
   }
 
   answerMC(qi: number, letter: string) {

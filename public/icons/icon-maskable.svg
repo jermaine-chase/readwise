@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed teal background (no rounded corners — OS applies mask shape) -->
+  <rect width="512" height="512" fill="#0D9488"/>
+  <!-- Open book left page (slightly smaller for safe zone) -->
+  <path d="M256 360 L148 340 Q128 336 128 314 L128 198 Q128 178 148 176 L256 196 Z" fill="white"/>
+  <!-- Open book right page -->
+  <path d="M256 360 L364 340 Q384 336 384 314 L384 198 Q384 178 364 176 L256 196 Z" fill="rgba(255,255,255,0.82)"/>
+  <!-- Book spine -->
+  <line x1="256" y1="196" x2="256" y2="360" stroke="#0f766e" stroke-width="5"/>
+  <!-- Left page lines -->
+  <rect x="148" y="218" width="90"  height="10" rx="5" fill="#0D9488" opacity="0.30"/>
+  <rect x="148" y="240" width="76"  height="10" rx="5" fill="#0D9488" opacity="0.30"/>
+  <rect x="148" y="262" width="88"  height="10" rx="5" fill="#0D9488" opacity="0.30"/>
+  <rect x="148" y="284" width="64"  height="10" rx="5" fill="#0D9488" opacity="0.30"/>
+  <!-- Right page lines -->
+  <rect x="278" y="218" width="90"  height="10" rx="5" fill="#0D9488" opacity="0.16"/>
+  <rect x="278" y="240" width="76"  height="10" rx="5" fill="#0D9488" opacity="0.16"/>
+  <rect x="278" y="262" width="88"  height="10" rx="5" fill="#0D9488" opacity="0.16"/>
+  <rect x="278" y="284" width="64"  height="10" rx="5" fill="#0D9488" opacity="0.16"/>
+  <!-- Sparkle -->
+  <path d="M362 130 L370 112 L378 130 L396 138 L378 146 L370 164 L362 146 L344 138 Z" fill="#FCD34D"/>
+</svg>

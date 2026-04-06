@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AiSettingsService } from './ai-settings.service';
+import { jsonrepair } from 'jsonrepair';
 
 export interface Passage {
   title: string;
@@ -12,7 +13,7 @@ export interface Passage {
   questions: Question[];
   vocabulary: VocabWord[];
 }
-
+;8
 export interface Question {
   type: 'mc' | 'tf' | 'short' | 'fill';
   q: string;
@@ -69,9 +70,7 @@ export class ApiService {
       prompt: content,
       // messages: [{ role: 'user', content }],
       stream: false,
-      /* options: {
-        include_thinking: false 
-      } */
+      think: false,
     });
 
     const response = await fetch(endpoint, { method: 'POST', headers, body });
@@ -166,35 +165,36 @@ export class ApiService {
     return res.choices?.[0]?.message?.content ?? '';
   }
 
-  async loadPassage(level: string): Promise<Passage> {
-    const topics = ['animals','space','oceans','science','plants','weather','ancient civilizations','technology', 'barbados',
-      'environment','rainforests','inventors','human body', 'dragon ball z', 'pokemon', 'bluey', 'minecraft'];
-    const topic = topics[Math.floor(Math.random() * topics.length)];
+  private buildPassagePrompt(topic: string, level: string): string {
+    const minWordCount = level === 'elementary' ? '110' : '190';
+    const maxWordCount = '250';
     const levelDesc = level === 'elementary'
-      ? 'grades 3-5, age 7-11, simple vocabulary, 110-140 words'
-      : 'grades 6-8, age 11-14, moderate vocabulary, 160-190 words';
-    const wordCountRule = level === 'elementary' ? 120 : 200;
+      ? `grades 3-5, age 7-11, simple vocabulary, ${minWordCount} - ${maxWordCount} words`
+      : `grades 6-8, age 11-14, moderate vocabulary, ${minWordCount} - ${maxWordCount} words`;
+    const levelLabel = level === 'elementary' ? 'Grade 3–5' : 'Grade 6–8';
 
-    const prompt = `Create a reading comprehension passage for ${levelDesc} about ${topic}.
+    return `Create a reading comprehension passage for ${levelDesc} about ${topic}.
+
 Rules:
-- Passage must be exactly 110–140 words (count carefully). Use simple, grade-appropriate vocabulary.
-- The wordCount field must reflect the actual word count of "text".
-- Questions must cover different skills: literal recall, inference, vocabulary in context, and critical thinking.
-- MC questions must have one clearly correct answer and three plausible distractors — avoid trick questions.
-- Vocabulary words must appear in the passage and be words a student might not know.
+- The passage must be include at minimum ${minWordCount} words and at maximum ${maxWordCount} words. Use simple, grade-appropriate vocabulary.
+- Count the words in "text" and put the exact count in "wordCount".
+- Include exactly 5 questions covering: literal recall (mc), inference (mc), true/false, short answer, and fill-in-the-blank.
+- MC questions must have one clearly correct answer and three plausible distractors. Options are labeled "A)", "B)", "C)", "D)" and "answer" is the letter only (e.g. "A").
+- The short answer question must be a specific, open-ended question about the passage that requires a 1–2 sentence response.
+- Fill in the blank: choose a single important word from the passage. "before" and "after" together must give enough context to make the answer solvable. "hint" names the word's category (e.g. "noun", "animal").
+- Vocabulary: choose 4 words that actually appear in the passage and that a student might not know.
+- Return ONLY valid JSON — no markdown, no code fences, no extra text.
 
-Return ONLY valid JSON, no markdown:
 {
   "title": "passage title",
-  "text": "the passage",
+  "text": "the full passage text",
   "topic": "${topic}",
-  "level": "${level === 'elementary' ? 'Grade 3–5' : 'Grade 6–8'}",
-  "wordCount": ${wordCountRule},
+  "level": "${levelLabel}",
   "questions": [
-    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"A","explanation":"why"},
-    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"B","explanation":"why"},
-    {"type":"tf","q":"True or False: statement","answer":"True","explanation":"explanation"},
-    {"type":"short","q":"Open question","sampleAnswer":"model answer","keywords":["key1","key2"]},
+    {"type":"mc","q":"question?","options":["A) option","B) option","C) option","D) option"],"answer":"A","explanation":"why A is correct"},
+    {"type":"mc","q":"question?","options":["A) option","B) option","C) option","D) option"],"answer":"B","explanation":"why B is correct"},
+    {"type":"tf","q":"True or False: statement","answer":"True","explanation":"evidence from the passage"},
+    {"type":"short","q":"question?","sampleAnswer":"model answer","keywords":["key1","key2"]},
     {"type":"fill","before":"Start of sentence ","answer":"missing word","after":" rest.","hint":"category hint"}
   ],
   "vocabulary": [
@@ -204,9 +204,15 @@ Return ONLY valid JSON, no markdown:
     {"word":"word4","definition":"simple def","example":"example sentence"}
   ]
 }`;
-    const raw = await this.callAI(prompt);
-    console.log('Generated passage:', raw);
-    return JSON.parse(raw.replace(/```json|```/g, '').trim());
+  }
+
+  async loadPassage(level: string): Promise<Passage> {
+    const topics = ['animals','space','oceans','science','plants','weather','ancient civilizations','technology', 'barbados',
+      'environment','rainforests','inventors','human body', 'dragon ball z', 'pokemon', 'bluey', 'minecraft'];
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+    const raw = await this.callAI(this.buildPassagePrompt(topic, level));
+    const repaired = jsonrepair(raw);
+    return JSON.parse(repaired);
   }
 
   async checkShortAnswer(passage: string, question: string, sampleAnswer: string, keywords: string[], studentAnswer: string): Promise<{ score: 'correct' | 'partial' | 'wrong'; feedback: string }> {
@@ -229,11 +235,9 @@ Start with 🌟 if excellent, 👍 if good, 💪 if needs work. Max 90 words.`;
     return this.callAI(prompt, 400);
   }
 
-  async generatePassage(topic: string, level: string): Promise<{ title: string; text: string; topic: string; level: string }> {
-    const levelDesc = level === 'elementary' ? 'grade 2-5, 110-140 word' : 'grade 6-8, 160-190 word';
-    const prompt = `Write a ${levelDesc} reading comprehension passage about: ${topic}.
-Return ONLY JSON: {"title":"...","text":"...","topic":"${topic}","level":"${level === 'elementary' ? 'Grade 3–5' : 'Grade 6–8'}"}`;
-    const raw = await this.callAI(prompt, 600);
-    return JSON.parse(raw.replace(/```json|```/g, '').trim());
+  async generatePassage(topic: string, level: string): Promise<Passage> {
+    const raw = await this.callAI(this.buildPassagePrompt(topic, level));
+    const repaired = jsonrepair(raw);
+    return JSON.parse(repaired);
   }
 }

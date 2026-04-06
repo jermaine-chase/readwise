@@ -23,7 +23,7 @@
         <div>
           <div class="cc-label">Your Class Code</div>
           <div class="cc-code">{{ teacher.classCode }}</div>
-          <div class="muted sm mt-4">Share this with your students to join your class</div>
+          <div class="muted sm mt-4">Share this code with your students so they can register</div>
         </div>
         <button class="btn btn-secondary" (click)="copyCode()">📋 Copy Code</button>
       </div>
@@ -74,7 +74,7 @@
             <th>Student</th><th>Points</th><th>Sessions</th><th>Avg Score</th><th>Last Active</th><th>Badges</th>
           </tr></thead>
           <tbody>
-            <tr *ngIf="!students.length"><td colspan="6"><div class="empty-state"><div class="es-icon">👩‍🎓</div><p>No students yet. Share code: <strong>{{ teacher.classCode }}</strong></p></div></td></tr>
+            <tr *ngIf="!students.length"><td colspan="6"><div class="empty-state"><div class="es-icon">👩‍🎓</div><p>No students yet. Share your code: <strong>{{ teacher.classCode }}</strong></p></div></td></tr>
             <tr *ngFor="let s of students" class="clickable" (click)="showStudentDetail(s.id)">
               <td><div class="fw-700">{{ s.name }}</div><div class="muted sm">{{ s.email }}</div></td>
               <td><strong class="teal-text">{{ s.points||0 }}</strong></td>
@@ -190,8 +190,140 @@
               <span *ngIf="!genLoading">✨ Generate with AI</span>
               <span *ngIf="genLoading" class="spinner"></span><span *ngIf="genLoading">Generating…</span>
             </button>
-            <div class="passage-preview" *ngIf="generatedPassage">{{ generatedPassage.text }}</div>
-            <button class="btn btn-secondary w-full mt-12" *ngIf="generatedPassage" (click)="saveGenPassage()">💾 Save This Passage</button>
+            <!-- Editable passage editor shown after generation -->
+            <div class="gen-editor" *ngIf="generatedPassage">
+              <div class="gen-editor-header">
+                <span class="fw-700">✏️ Edit before saving</span>
+                <button class="btn btn-ghost btn-sm" (click)="generatedPassage = null">✕ Discard</button>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Title</label>
+                <input class="form-input" [(ngModel)]="generatedPassage.title">
+              </div>
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="form-label">Level</label>
+                  <select class="form-select" [(ngModel)]="generatedPassage.level">
+                    <option value="Grade 3–5">Elementary (Gr 3–5)</option>
+                    <option value="Grade 6–8">Middle (Gr 6–8)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Topic</label>
+                  <input class="form-input" [(ngModel)]="generatedPassage.topic">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Passage Text</label>
+                <textarea class="form-textarea" [(ngModel)]="generatedPassage.text" rows="6"></textarea>
+              </div>
+
+              <div class="editor-section-label">Questions</div>
+              <div *ngFor="let q of generatedPassage.questions; let qi=index" class="question-editor">
+                <div class="qe-header">
+                  <span class="qe-type-badge" [ngClass]="'qe-'+q.type">{{ q.type==='mc'?'Multiple Choice':q.type==='tf'?'True/False':q.type==='short'?'Short Answer':'Fill in Blank' }}</span>
+                  <span class="qe-num">Q{{ qi+1 }}</span>
+                  <button class="delete-btn" (click)="removeQuestion(qi)">×</button>
+                </div>
+
+                <div class="form-group" *ngIf="q.type !== 'fill'">
+                  <label class="form-label">Question</label>
+                  <input class="form-input" [(ngModel)]="q.q">
+                </div>
+
+                <ng-container *ngIf="q.type === 'mc'">
+                  <div class="form-group" *ngFor="let opt of q.options; let oi=index">
+                    <label class="form-label">Option {{ ['A','B','C','D'][oi] }}</label>
+                    <input class="form-input" [(ngModel)]="q.options![oi]">
+                  </div>
+                  <div class="grid-2">
+                    <div class="form-group">
+                      <label class="form-label">Correct Answer</label>
+                      <select class="form-select" [(ngModel)]="q.answer">
+                        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Explanation</label>
+                      <input class="form-input" [(ngModel)]="q.explanation">
+                    </div>
+                  </div>
+                </ng-container>
+
+                <ng-container *ngIf="q.type === 'tf'">
+                  <div class="grid-2">
+                    <div class="form-group">
+                      <label class="form-label">Answer</label>
+                      <select class="form-select" [(ngModel)]="q.answer">
+                        <option value="True">True</option><option value="False">False</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Explanation</label>
+                      <input class="form-input" [(ngModel)]="q.explanation">
+                    </div>
+                  </div>
+                </ng-container>
+
+                <ng-container *ngIf="q.type === 'short'">
+                  <div class="form-group">
+                    <label class="form-label">Sample Answer</label>
+                    <input class="form-input" [(ngModel)]="q.sampleAnswer">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Keywords (comma-separated)</label>
+                    <input class="form-input" [ngModel]="getKeywords(q)" (ngModelChange)="setKeywords(q, $event)">
+                  </div>
+                </ng-container>
+
+                <ng-container *ngIf="q.type === 'fill'">
+                  <div class="form-group">
+                    <label class="form-label">Text before blank</label>
+                    <input class="form-input" [(ngModel)]="q.before">
+                  </div>
+                  <div class="grid-2">
+                    <div class="form-group">
+                      <label class="form-label">Answer (missing word)</label>
+                      <input class="form-input" [(ngModel)]="q.answer">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hint (category)</label>
+                      <input class="form-input" [(ngModel)]="q.hint">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Text after blank</label>
+                    <input class="form-input" [(ngModel)]="q.after">
+                  </div>
+                </ng-container>
+              </div>
+
+              <div class="editor-section-label mt-12">Vocabulary</div>
+              <div *ngFor="let v of generatedPassage.vocabulary; let vi=index" class="question-editor">
+                <div class="qe-header">
+                  <span class="fw-700 sm">Word {{ vi+1 }}</span>
+                  <button class="delete-btn" (click)="removeVocab(vi)">×</button>
+                </div>
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Word</label>
+                    <input class="form-input" [(ngModel)]="v.word">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Definition</label>
+                    <input class="form-input" [(ngModel)]="v.definition">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Example Sentence</label>
+                  <input class="form-input" [(ngModel)]="v.example">
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm mt-4 mb-12" (click)="addVocab()">+ Add Word</button>
+
+              <button class="btn btn-primary w-full mt-4" (click)="saveGenPassage()">💾 Save Passage</button>
+            </div>
           </div>
         </div>
         <div>

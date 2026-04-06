@@ -35,7 +35,7 @@
       <button class="btn btn-secondary w-full" (click)="show('register')">Create a new account</button>
       <div class="demo-links">
         <button class="demo-btn student" (click)="demoLogin('student')">Try as Student Demo</button>
-        <button class="demo-btn teacher" (click)="demoLogin('teacher')">Try as Teacher Demo</button>
+        <button class="demo-btn teacher" (click)="demoLogin('teacher')">Try as Teacher/Parent Demo</button>
       </div>
     </div>
 
@@ -47,7 +47,7 @@
       </div>
       <div class="role-toggle">
         <button class="role-btn" [class.active]="role==='student'" (click)="role='student'">🎒 Student</button>
-        <button class="role-btn" [class.active]="role==='teacher'" (click)="role='teacher'">🍎 Teacher</button>
+        <button class="role-btn" [class.active]="role==='teacher'" (click)="role='teacher'">🍎 Teacher/Parent</button>
       </div>
       <div class="form-group">
         <label class="form-label">Full Name</label>
@@ -62,9 +62,9 @@
         <input class="form-input" type="password" [(ngModel)]="regPassword" placeholder="Min 6 characters">
       </div>
       <div class="form-group" *ngIf="role==='student'">
-        <label class="form-label">Class Code <span class="optional">(from your teacher)</span></label>
+        <label class="form-label">Teacher/Parent Code <span class="required">*</span></label>
         <input class="form-input" type="text" [(ngModel)]="regClassCode" placeholder="e.g. CLS4XY2">
-        <span class="form-hint">Optional — join your class later</span>
+        <span class="form-hint">Required — get this code from your teacher or parent</span>
       </div>
       <div class="form-error" *ngIf="regErr">{{ regErr }}</div>
       <button class="btn btn-primary w-full mt-16" (click)="doRegister()">Create Account →</button>
@@ -77,7 +77,7 @@
       <div class="feature"><div class="feature-icon teal">🤖</div><div class="feature-text"><h4>AI Feedback</h4><p>Instant personalized coaching</p></div></div>
       <div class="feature"><div class="feature-icon purple">📊</div><div class="feature-text"><h4>Progress Tracking</h4><p>Full performance reports</p></div></div>
       <div class="feature"><div class="feature-icon amber">🏆</div><div class="feature-text"><h4>Badges & Points</h4><p>Stay motivated every day</p></div></div>
-      <div class="feature"><div class="feature-icon blue">🍎</div><div class="feature-text"><h4>Teacher Portal</h4><p>Assign & track your class</p></div></div>
+      <div class="feature"><div class="feature-icon blue">🍎</div><div class="feature-text"><h4>Teacher/Parent Portal</h4><p>Assign & track your class</p></div></div>
     </div>
   </div>
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Teal rounded background -->
+  <rect width="512" height="512" rx="100" fill="#0D9488"/>
+  <!-- Open book left page -->
+  <path d="M256 344 L132 322 Q108 318 108 294 L108 176 Q108 152 132 150 L256 172 Z" fill="white"/>
+  <!-- Open book right page -->
+  <path d="M256 344 L380 322 Q404 318 404 294 L404 176 Q404 152 380 150 L256 172 Z" fill="rgba(255,255,255,0.82)"/>
+  <!-- Book spine -->
+  <line x1="256" y1="172" x2="256" y2="344" stroke="#0f766e" stroke-width="5"/>
+  <!-- Left page lines -->
+  <rect x="130" y="198" width="104" height="10" rx="5" fill="#0D9488" opacity="0.32"/>
+  <rect x="130" y="222" width="88"  height="10" rx="5" fill="#0D9488" opacity="0.32"/>
+  <rect x="130" y="246" width="100" height="10" rx="5" fill="#0D9488" opacity="0.32"/>
+  <rect x="130" y="270" width="74"  height="10" rx="5" fill="#0D9488" opacity="0.32"/>
+  <!-- Right page lines -->
+  <rect x="278" y="198" width="104" height="10" rx="5" fill="#0D9488" opacity="0.18"/>
+  <rect x="278" y="222" width="88"  height="10" rx="5" fill="#0D9488" opacity="0.18"/>
+  <rect x="278" y="246" width="100" height="10" rx="5" fill="#0D9488" opacity="0.18"/>
+  <rect x="278" y="270" width="74"  height="10" rx="5" fill="#0D9488" opacity="0.18"/>
+  <!-- Sparkle star (top-right) -->
+  <path d="M376 112 L385 90 L394 112 L416 121 L394 130 L385 152 L376 130 L354 121 Z" fill="#FCD34D"/>
+</svg>
