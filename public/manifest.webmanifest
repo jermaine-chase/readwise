@@ -1,7 +1,7 @@
 {
-  "name": "ReadWise — Build Reading Superpowers",
-  "short_name": "ReadWise",
-  "description": "AI-powered reading comprehension practice for students grades 2–8.",
+  "name": "LearnWise — Build Learning Superpowers",
+  "short_name": "LearnWise",
+  "description": "AI-powered reading and math practice for students grades K–8.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

@@ -36,6 +36,21 @@ export interface VocabWord {
   example: string;
 }
 
+export interface MathQuestion {
+  type: 'mc' | 'short';
+  q: string;
+  options?: string[];
+  answer: string;
+  explanation?: string;
+  hint?: string;
+}
+
+export interface MathProblem {
+  grade: string;
+  topic: string;
+  problems: MathQuestion[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   constructor(private http: HttpClient, private aiSettings: AiSettingsService) {}
@@ -239,5 +254,57 @@ Start with 🌟 if excellent, 👍 if good, 💪 if needs work. Max 90 words.`;
     const raw = await this.callAI(this.buildPassagePrompt(topic, level));
     const repaired = jsonrepair(raw);
     return JSON.parse(repaired);
+  }
+
+  private buildMathPrompt(grade: string, topic: string): string {
+    const gradeDesc: Record<string, string> = {
+      'k2': 'Kindergarten–Grade 2 (ages 5–8): counting, addition/subtraction within 20, basic shapes, simple measurement',
+      'elementary': 'Grade 3–5 (ages 8–11): multiplication, division, fractions, decimals, basic geometry, word problems',
+      'middle': 'Grade 6–8 (ages 11–14): ratios, percentages, integers, algebra expressions, geometry, statistics, word problems',
+    };
+    const gradeLabel: Record<string, string> = { 'k2': 'K–2', 'elementary': 'Grade 3–5', 'middle': 'Grade 6–8' };
+    const desc = gradeDesc[grade] ?? gradeDesc['elementary'];
+    const label = gradeLabel[grade] ?? 'Grade 3–5';
+    const topicLine = topic === 'random' ? 'Choose an appropriate math topic for this grade level.' : `Topic: ${topic}`;
+
+    return `Create a set of 6 grade-appropriate math problems for ${desc}. ${topicLine}
+
+Rules:
+- Problems must be clearly worded and solvable by a student at this level.
+- Include 4 multiple-choice (mc) and 2 short-answer (short) problems.
+- MC options are labeled "A)", "B)", "C)", "D)" and "answer" is the letter only (e.g. "A").
+- Short-answer "answer" is the exact numeric or expression answer (e.g. "12" or "3/4").
+- "explanation" gives a brief step-by-step solution (1–3 sentences).
+- "hint" (optional, short-answer only) is a one-phrase strategy nudge.
+- Return ONLY valid JSON — no markdown, no code fences, no extra text.
+
+{
+  "grade": "${label}",
+  "topic": "topic name",
+  "problems": [
+    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"A","explanation":"why"},
+    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"B","explanation":"why"},
+    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"C","explanation":"why"},
+    {"type":"mc","q":"question?","options":["A) opt","B) opt","C) opt","D) opt"],"answer":"D","explanation":"why"},
+    {"type":"short","q":"question?","answer":"42","explanation":"step-by-step","hint":"strategy hint"},
+    {"type":"short","q":"question?","answer":"3/4","explanation":"step-by-step","hint":"strategy hint"}
+  ]
+}`;
+  }
+
+  async loadMathProblems(grade: string, topic: string): Promise<MathProblem> {
+    const raw = await this.callAI(this.buildMathPrompt(grade, topic));
+    const repaired = jsonrepair(raw);
+    return JSON.parse(repaired);
+  }
+
+  async checkMathShortAnswer(question: string, correctAnswer: string, studentAnswer: string): Promise<{ score: 'correct' | 'partial' | 'wrong'; feedback: string }> {
+    const prompt = `Math question: "${question}"
+Correct answer: "${correctAnswer}"
+Student answer: "${studentAnswer}"
+Determine if the student's answer is correct, partially correct, or wrong. Accept equivalent forms (e.g. "0.5" and "1/2").
+Respond ONLY with JSON: {"score":"correct"|"partial"|"wrong","feedback":"1-2 encouraging sentences for a kid"}`;
+    const raw = await this.callAI(prompt, 300);
+    return JSON.parse(raw.replace(/```json|```/g, '').trim());
   }
 }

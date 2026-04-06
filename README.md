@@ -1,47 +1,82 @@
-# Readwise
+# LearnWise
 
-An AI-powered reading comprehension practice app for K–8 students, built with Angular 21.
+An AI-powered reading and math practice app for K–8 students, built with Angular 21. Installable as a PWA for offline use.
 
 ## Overview
 
-Readwise supports two roles — **students** and **teachers** — with role-based dashboards and an auth guard protecting each route. All data is persisted in `localStorage` (no backend required). AI features are powered by a configurable AI provider (Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or a local Ollama model) called directly from the browser.
+LearnWise supports two roles — **students** and **teachers/parents** — with role-based dashboards and an auth guard protecting each route. All data is persisted in `localStorage` (no backend required). AI features are powered by a configurable AI provider (Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or a local Ollama model) called directly from the browser.
 
-### Student Features
+Students must provide a teacher/parent code when registering — this links them to the correct class automatically.
 
-- **Reading Passages** — AI-generated passages at two difficulty levels: Elementary (Grade 3–5, ~110–140 words) and Middle School (Grade 6–8, ~160–190 words), across randomized topics (animals, space, history, etc.)
+---
+
+## Features
+
+### Student
+
+#### Reading
+
+- **AI-Generated Passages** — Reading passages at two difficulty levels:
+  - Elementary (Grade 3–5, ~110–250 words)
+  - Middle School (Grade 6–8, ~190–250 words)
+  - Randomized topics: animals, space, history, Minecraft, Pokémon, and more
 - **Three Practice Modes:**
-  - **Q&A** — Multiple choice, true/false, short answer (AI-graded), and fill-in-the-blank questions with fuzzy matching
+  - **Q&A** — Multiple choice, true/false, short answer (AI-graded), and fill-in-the-blank with fuzzy matching
   - **Vocabulary** — Flashcard-style word definitions with example sentences
   - **Summary** — Free-write summary with AI feedback and encouragement
-- **Points & Progress** — Points awarded per activity; session history tracked with scores, duration, and timestamps
-- **Badges** — Six achievement badges earned automatically based on activity milestones (First Read, Perfect Score, On Fire, Word Wizard, Young Author, Centurion)
 
-### Teacher Features
+#### Math
 
-- **Class Dashboard** — Overview of class average score, students active today, and recent activity feed
-- **Student Management** — Browse enrolled students, view individual progress (scores, sessions, skill breakdowns, badges), and identify students needing attention (low scores or 5+ days inactive)
+- **AI-Generated Problem Sets** — 6 problems per session (4 multiple choice + 2 short answer) at three grade bands:
+  - K–2 (Ages 5–8): counting, addition/subtraction, shapes, measurement, patterns
+  - Grade 3–5 (Ages 8–11): multiplication, division, fractions, decimals, geometry, word problems
+  - Grade 6–8 (Ages 11–14): ratios, percentages, integers, algebra, geometry, statistics
+- **Topic Selection** — Choose a specific topic per grade band or roll a random one
+- **AI-Graded Short Answers** — Accepts equivalent forms (e.g. `0.5` and `1/2`), with step-by-step explanations shown after each answer
+
+#### Progress & Gamification
+
+- **Points & Progress** — Points awarded per activity; full session history with scores, duration, and timestamps; skill breakdown tracks reading Q&A, vocabulary, summarization, and math separately
+- **Badges** — Six achievement badges earned automatically: First Read, Perfect Score, On Fire, Word Wizard, Young Author, Centurion
+
+### Teacher / Parent
+
+- **Class Code** — Auto-generated code (e.g. `CLSAB12`) shared with students at registration
+- **Class Dashboard** — Class average score, students active today, recent activity feed, and per-skill performance breakdown
+- **Student Management** — Browse enrolled students; drill into individual progress (sessions, scores, skill breakdown, badges); flag students needing attention (low avg score or 5+ days inactive)
 - **Leaderboard** — Points-based ranking with medal icons
-- **Custom Passages** — Create passages manually or generate them via AI from a topic prompt; saved per-teacher account
-- **Class Code** — Auto-generated class code (e.g. `CLSAB12`) shared with students to enroll
+- **Custom Passages** — Write passages manually or generate them via AI from a topic prompt. Generated passages include a full set of questions and vocabulary — all editable before saving:
+  - Edit title, level, topic, and passage text
+  - Edit each question (MC options & answer, True/False, short answer sample + keywords, fill-in-the-blank)
+  - Edit vocabulary words, definitions, and example sentences
+
+---
 
 ## Project Structure
 
 ```
 src/app/
 ├── components/
-│   ├── nav/               # Shared nav bar
-│   └── settings-panel/    # AI provider settings UI
-├── guards/auth-guard.ts   # Role-based route protection
+│   ├── nav/                    # Shared nav bar
+│   └── settings-panel/         # AI provider settings UI
+├── guards/auth-guard.ts        # Role-based route protection
 ├── pages/
-│   ├── login/             # Login / register / demo login
-│   ├── student/           # Student dashboard
-│   └── teacher/           # Teacher dashboard
+│   ├── login/                  # Landing, login, register, demo login
+│   ├── student/                # Student practice dashboard (reading + math)
+│   └── teacher/                # Teacher/parent portal
 └── services/
     ├── ai-settings.service.ts  # AI provider config (persisted to localStorage)
-    ├── api.ts                  # AI integration (passage gen, grading, feedback)
+    ├── api.ts                  # AI integration: passage/math generation, grading, feedback
     ├── auth.ts                 # Login, register, logout, demo login
     └── storage.ts              # localStorage wrapper, session saving, badge logic
+
+public/
+├── sw.js                       # Custom service worker (offline support)
+├── manifest.webmanifest        # PWA install manifest
+└── icons/                      # SVG app icons (any size + maskable)
 ```
+
+---
 
 ## Getting Started
 
@@ -49,7 +84,7 @@ src/app/
 
 - Node.js 18+
 - npm 10+
-- An API key for your chosen AI provider (see [AI Provider Setup](#ai-provider-setup) below)
+- An API key for your chosen AI provider (see [AI Provider Setup](#ai-provider-setup))
 
 ### Install & Run
 
@@ -58,41 +93,60 @@ npm install
 ng serve
 ```
 
-Navigate to `http://localhost:4200/`.
+Navigate to `http://localhost:4200`.
 
 ### Demo Login
 
-On the login page, use the **"Demo Student"** or **"Demo Teacher"** buttons to auto-create and log in demo accounts without registration.
+On the login page, use **Try as Student Demo** or **Try as Teacher/Parent Demo** to auto-create and sign in demo accounts without registration.
+
+---
 
 ## AI Provider Setup
 
-AI provider settings are configured in-app via the **Settings panel** (gear icon in the nav bar). Settings are saved to `localStorage` — no code changes needed.
+AI provider settings are configured in-app via the **Settings panel** (accessible from the sidebar). Settings are saved to `localStorage` — no code changes needed.
 
-| Provider | Model used | Required fields |
+| Provider | Model | Required |
 |---|---|---|
 | **Claude** (default) | `claude-sonnet-4-20250514` | API Key |
 | **OpenAI** | `gpt-4o` | API Key |
 | **Gemini** | `gemini-2.0-flash` | API Key |
 | **Azure OpenAI** | your deployment | API Key + Endpoint URL |
 | **DeepSeek** | `deepseek-chat` | API Key |
-| **Local (Ollama)** | configurable (default: `llama3.2`) | Endpoint URL (default: `http://localhost:11434/api/generate`) |
+| **Local (Ollama)** | configurable (default: `llama3.2`) | Endpoint URL |
 
-> **Note:** API keys are stored in `localStorage` and sent directly from the browser. This is convenient for local use but not recommended for production deployments. Consider a thin server-side proxy to keep keys server-side.
+> **Security note:** API keys are stored in `localStorage` and sent directly from the browser. Fine for local/personal use; for a shared deployment consider routing AI calls through a server-side proxy to keep keys out of the client.
+
+---
+
+## PWA / Offline Support
+
+LearnWise is installable as a Progressive Web App on desktop and mobile. After the first load, the app shell (HTML, JS, CSS, icons) is served from the service worker cache so the app opens offline. AI features (passage/problem generation, grading) still require a network connection.
+
+The service worker (`public/sw.js`) uses:
+- **Navigation requests** — network-first, falls back to cached `index.html` for SPA routing
+- **Same-origin assets** — cache-first with background refresh (stale-while-revalidate)
+- **External AI API calls** — always bypassed (never cached)
+
+> **Icon note:** Icons use SVG format (`sizes: "any"`), which is supported by Chrome, Edge, and Firefox. For broader compatibility (older Android, iOS Add to Home Screen thumbnails) replace `/public/icons/icon.svg` with PNG exports at 192×192 and 512×512.
+
+---
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `ng serve` | Start dev server at `http://localhost:4200` |
+| `ng serve` | Dev server at `http://localhost:4200` |
 | `ng build` | Production build to `dist/` |
-| `ng test` | Run unit tests with Vitest |
 | `ng build --watch --configuration development` | Watch mode build |
+| `ng test` | Run unit tests |
+
+---
 
 ## Tech Stack
 
-- **Angular 21.2** (NgModule-based)
+- **Angular 21.2** — NgModule-based
 - **TypeScript 5.9**
 - **RxJS 7.8**
-- **Vitest** (via Angular CLI test runner)
-- **Prettier** for code formatting
-- **Multi-provider AI** — Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or local Ollama
+- **Prettier** — code formatting
+- **Custom service worker** — PWA / offline support
+- **Multi-provider AI** — Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, Ollama

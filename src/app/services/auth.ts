@@ -49,7 +49,7 @@ export class AuthService {
   }
 
   demoLogin(role: 'student' | 'teacher'): void {
-    const email = role + '@demo.readwise.app';
+    const email = role + '@demo.learnwise.app';
     const password = 'demo1234';
     let res = this.login(email, password);
     if (res.err) {

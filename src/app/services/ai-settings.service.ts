@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: AiSettings = {
 
 @Injectable({ providedIn: 'root' })
 export class AiSettingsService {
-  private readonly KEY = 'rw_ai_settings';
+  private readonly KEY = 'lw_ai_settings';
 
   getSettings(): AiSettings {
     try {

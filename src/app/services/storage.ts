@@ -19,7 +19,7 @@ export interface User {
 }
 
 export interface Session {
-  type: 'qa' | 'vocab' | 'summary';
+  type: 'qa' | 'vocab' | 'summary' | 'math';
   title: string;
   score?: number;
   correct?: number;
@@ -49,7 +49,7 @@ export interface Badge {
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
-  private prefix = 'rw_';
+  private prefix = 'lw_';
 
   set(key: string, val: any): void {
     localStorage.setItem(this.prefix + key, JSON.stringify(val));

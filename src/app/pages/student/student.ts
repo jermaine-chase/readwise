@@ -1,8 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../../services/auth';
 import { StorageService, User, Badge } from '../../services/storage';
-import { ApiService, Passage } from '../../services/api';
+import { ApiService, Passage, MathProblem } from '../../services/api';
 
+type Subject = 'reading' | 'math';
 type Mode = 'qa' | 'vocab' | 'summary';
 type Page = 'practice' | 'progress' | 'badges' | 'settings';
 interface AnswerState { result: 'correct' | 'wrong' | 'answered' | null; feedback?: string; loading?: boolean; }
@@ -15,12 +16,35 @@ interface AnswerState { result: 'correct' | 'wrong' | 'answered' | null; feedbac
 })
 export class Student implements OnInit {
   user!: User;
+  subject: Subject = 'reading';
   mode: Mode = 'qa';
   page: Page = 'practice';
   level = 'elementary';
 
   passage: Passage | null = null;
   passageLoading = false;
+
+  // Math
+  mathGrade = 'elementary';
+  mathTopic = 'random';
+  mathProblems: MathProblem | null = null;
+  mathLoading = false;
+  mathAnswers: Record<number, AnswerState> = {};
+  selectedMathMC: Record<number, string> = {};
+  mathLocked = false;
+  mathShowScore = false;
+
+  readonly mathTopics: Record<string, string[]> = {
+    k2: ['Counting & Numbers', 'Addition & Subtraction', 'Shapes', 'Measurement', 'Patterns'],
+    elementary: ['Multiplication & Division', 'Fractions', 'Decimals', 'Geometry', 'Word Problems', 'Place Value'],
+    middle: ['Ratios & Proportions', 'Percentages', 'Integers', 'Algebra', 'Geometry', 'Statistics & Data'],
+  };
+
+  get mathTopicOptions() { return this.mathTopics[this.mathGrade] ?? []; }
+  get mathCorrectCount() { return Object.values(this.mathAnswers).filter(a => a.result === 'correct').length; }
+  get mathScorePct() { return this.mathProblems ? Math.round(this.mathCorrectCount / this.mathProblems.problems.length * 100) : 0; }
+  get mathScoreEmoji() { return this.mathScorePct >= 90 ? '🏆' : this.mathScorePct >= 75 ? '🌟' : this.mathScorePct >= 60 ? '👍' : '💪'; }
+  get mathScoreMsg() { return this.mathScorePct >= 90 ? 'Outstanding!' : this.mathScorePct >= 75 ? 'Great job!' : this.mathScorePct >= 60 ? 'Good effort!' : 'Keep practicing!'; }
 
   answers: Record<number, AnswerState> = {};
   selectedMC: Record<number, string> = {};
@@ -178,8 +202,72 @@ export class Student implements OnInit {
 
   skillPct(type: string): number {
     if (type==='qa') return this.avgScore;
+    if (type==='math') {
+      const mathSessions = this.sessions.filter(s => s.type === 'math');
+      return mathSessions.length ? Math.round(mathSessions.reduce((a, s) => a + (s.score ?? 0), 0) / mathSessions.length) : 0;
+    }
     const count = this.sessions.filter(s=>s.type===type).length;
     return type==='vocab' ? Math.min(count*20,100) : Math.min(count*33,100);
+  }
+
+  switchSubject(s: Subject) {
+    this.subject = s;
+    if (s === 'math') { this.mathProblems = null; this.mathAnswers = {}; this.selectedMathMC = {}; this.mathLocked = false; this.mathShowScore = false; }
+    if (s === 'reading') { this.passage = null; this.answers = {}; this.selectedMC = {}; this.qaLocked = false; this.showScore = false; }
+  }
+
+  onMathGradeChange() { this.mathTopic = 'random'; this.mathProblems = null; }
+
+  async loadMathProblems() {
+    this.mathLoading = true;
+    this.mathProblems = null;
+    this.mathAnswers = {}; this.selectedMathMC = {}; this.mathLocked = false; this.mathShowScore = false;
+    try {
+      this.mathProblems = await this.api.loadMathProblems(this.mathGrade, this.mathTopic);
+    } catch (e) { console.error(e); }
+    this.mathLoading = false;
+    this.cdr.detectChanges();
+  }
+
+  answerMathMC(pi: number, letter: string) {
+    if (this.mathAnswers[pi]) return;
+    const correct = this.mathProblems!.problems[pi].answer;
+    this.mathAnswers[pi] = { result: letter === correct ? 'correct' : 'wrong' };
+    this.addPoints(letter === correct ? 10 : 2);
+    this.checkAllMathAnswered();
+  }
+
+  async checkMathShort(pi: number, inputEl: HTMLInputElement) {
+    const val = inputEl.value.trim();
+    if (!val || this.mathAnswers[pi]) return;
+    this.mathAnswers[pi] = { result: 'answered', loading: true };
+    const p = this.mathProblems!.problems[pi];
+    try {
+      const res = await this.api.checkMathShortAnswer(p.q, p.answer, val);
+      const r: 'correct'|'answered'|'wrong' = res.score === 'correct' ? 'correct' : res.score === 'partial' ? 'answered' : 'wrong';
+      this.mathAnswers[pi] = { result: r, feedback: res.feedback, loading: false };
+      this.addPoints(r === 'correct' ? 12 : r === 'answered' ? 5 : 1);
+    } catch { this.mathAnswers[pi] = { result: null }; }
+    this.checkAllMathAnswered();
+    this.cdr.detectChanges();
+  }
+
+  mathDotClass(pi: number): string {
+    const a = this.mathAnswers[pi];
+    if (!a) return '';
+    return a.result === 'correct' ? 'correct' : a.result === 'wrong' ? 'wrong' : 'answered';
+  }
+
+  checkAllMathAnswered() {
+    if (!this.mathProblems || this.mathShowScore) return;
+    const loading = Object.values(this.mathAnswers).some(a => a.loading);
+    if (!loading && Object.keys(this.mathAnswers).length >= this.mathProblems.problems.length) this.finalizeMathScore();
+  }
+
+  finalizeMathScore() {
+    this.mathLocked = true; this.mathShowScore = true;
+    this.storage.saveSession(this.user.id, { type:'math', title: (this.mathProblems!.topic || 'Math') + ' (' + this.mathProblems!.grade + ')', score: this.mathScorePct, correct: this.mathCorrectCount, total: this.mathProblems!.problems.length, points: this.mathCorrectCount * 10, duration: 0, ts: Date.now() });
+    this.refreshUser(); this.triggerBadgeCheck();
   }
 
   timeAgo(ts: number) { return this.storage.timeAgo(ts); }
