@@ -46,6 +46,30 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "define": {
+              "global": "globalThis"
+            },
+            "allowedCommonJsDependencies": [
+              "events",
+              "pouchdb-browser",
+              "pouchdb-utils",
+              "pouchdb-md5",
+              "pouchdb-binary-utils",
+              "pouchdb-errors",
+              "pouchdb-fetch",
+              "pouchdb-adapter-utils",
+              "pouchdb-collate",
+              "pouchdb-selector-core",
+              "pouchdb-abstract-mapreduce",
+              "pouchdb-find",
+              "inherits",
+              "immediate",
+              "spark-md5",
+              "lie",
+              "argsarray",
+              "double-ended-queue",
+              "vuvuzela"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -69,8 +93,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "650kB",
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",

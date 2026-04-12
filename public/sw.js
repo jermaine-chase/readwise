@@ -38,6 +38,14 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// CouchDB / PouchDB sync path patterns — never cache these
+const COUCH_PATHS = ['/_changes', '/_bulk_docs', '/_bulk_get', '/_revs_diff', '/_local/', '/_all_docs'];
+
+function isCouchRequest(url) {
+  // Pass through any request to a user-configured CouchDB (detected by path patterns)
+  return COUCH_PATHS.some(p => url.pathname.includes(p));
+}
+
 // ---------- Fetch ----------
 self.addEventListener('fetch', event => {
   const req = event.request;
@@ -49,7 +57,10 @@ self.addEventListener('fetch', event => {
   // 2. Never intercept external AI API calls
   if (BYPASS_ORIGINS.some(o => url.hostname.includes(o))) return;
 
-  // 3. Navigation requests (page loads / SPA route changes)
+  // 3. Never intercept CouchDB/PouchDB sync requests
+  if (isCouchRequest(url)) return;
+
+  // 4. Navigation requests (page loads / SPA route changes)
   //    → Try network first; if offline, return cached index.html so Angular can route
   if (req.mode === 'navigate') {
     event.respondWith(
@@ -65,7 +76,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 4. Same-origin static assets (JS, CSS, fonts, images, icons)
+  // 5. Same-origin static assets (JS, CSS, fonts, images, icons)
   //    → Cache-first; populate cache on first network hit
   if (url.origin === self.location.origin) {
     event.respondWith(

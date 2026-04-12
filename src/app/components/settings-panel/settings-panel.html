@@ -122,4 +122,79 @@
       <p class="muted">Make sure your local AI server is running before generating passages. Ollama and LM Studio both expose an OpenAI-compatible endpoint. No data leaves your machine.</p>
     </div>
   </div>
+
+  <!-- CouchDB Sync -->
+  <h2 class="page-title mt-32">Data Sync</h2>
+  <p class="muted mb-24">
+    Optionally sync your data with a CouchDB server so it persists across devices.
+    Data is always stored locally first via PouchDB and synced in the background.
+  </p>
+
+  <div class="card">
+    <div class="sync-toggle-row mb-16">
+      <label class="sync-toggle-label">
+        <input type="checkbox" [(ngModel)]="syncConfig.enabled">
+        <span>Enable CouchDB sync</span>
+      </label>
+      <span class="sync-status-badge" [class]="'badge-' + syncStatus">
+        {{ syncStatus === 'active' ? '🟢 Syncing' : syncStatus === 'pending' ? '🟡 Connecting…' : '⚫ Off' }}
+      </span>
+    </div>
+
+    <ng-container *ngIf="syncConfig.enabled">
+      <div class="form-group">
+        <label class="form-label">CouchDB URL</label>
+        <input
+          class="form-input"
+          type="text"
+          [(ngModel)]="syncConfig.url"
+          placeholder="http://localhost:5984/learnwise">
+        <p class="form-hint mt-4">
+          Include the database name in the URL, e.g.
+          <code>https://your-couch.example.com/learnwise</code>
+        </p>
+      </div>
+
+      <div class="form-group mt-12">
+        <label class="form-label">Username <span class="muted">(optional)</span></label>
+        <input
+          class="form-input"
+          type="text"
+          [(ngModel)]="syncConfig.username"
+          placeholder="admin">
+      </div>
+
+      <div class="form-group mt-12">
+        <label class="form-label">Password <span class="muted">(optional)</span></label>
+        <div class="key-input-wrap">
+          <input
+            class="form-input key-input"
+            [type]="showSyncPassword ? 'text' : 'password'"
+            [(ngModel)]="syncConfig.password"
+            placeholder="••••••••">
+          <button class="show-btn" (click)="showSyncPassword = !showSyncPassword">
+            {{ showSyncPassword ? '🙈 Hide' : '👁 Show' }}
+          </button>
+        </div>
+        <p class="form-hint mt-4">Credentials are stored only in your browser's local storage and never sent anywhere except your CouchDB server.</p>
+      </div>
+    </ng-container>
+
+    <button class="btn btn-primary mt-20" (click)="saveSync()">
+      <span *ngIf="!syncSaved">💾 Save Sync Settings</span>
+      <span *ngIf="syncSaved">✅ Saved!</span>
+    </button>
+  </div>
+
+  <div class="info-box mt-24">
+    <div class="info-icon">🗄️</div>
+    <div>
+      <div class="fw-700 mb-4">Offline-first with PouchDB</div>
+      <p class="muted">
+        All data is stored locally in PouchDB (IndexedDB) so the app works fully offline.
+        When sync is enabled, changes are pushed to CouchDB automatically whenever you're online.
+        Self-host CouchDB or use a managed service like <strong>Cloudant</strong> or <strong>DigitalOcean</strong>.
+      </p>
+    </div>
+  </div>
 </div>

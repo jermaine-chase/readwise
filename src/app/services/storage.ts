@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { DbService } from './db.service';
 
 export interface User {
   id: string;
@@ -51,6 +52,8 @@ export interface Badge {
 export class StorageService {
   private prefix = 'lw_';
 
+  constructor(private db: DbService) {}
+
   set(key: string, val: any): void {
     localStorage.setItem(this.prefix + key, JSON.stringify(val));
   }
@@ -72,6 +75,8 @@ export class StorageService {
 
   saveUsers(users: Record<string, User>): void {
     this.set('users', users);
+    // Persist asynchronously to PouchDB / CouchDB
+    this.db.persistUsers(users as Record<string, unknown>);
   }
 
   getCurrentUser(): User | null {

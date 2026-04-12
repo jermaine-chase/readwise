@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AiSettingsService, AiSettings, AiProvider } from '../../services/ai-settings.service';
+import { DbService, DbSyncConfig } from '../../services/db.service';
 
 interface ProviderOption {
   value: AiProvider;
@@ -73,10 +74,16 @@ export class SettingsPanel implements OnInit {
     },
   ];
 
-  constructor(private aiSettings: AiSettingsService) {}
+  syncConfig: DbSyncConfig = { url: '', username: '', password: '', enabled: false };
+  showSyncPassword = false;
+  syncSaved = false;
+  syncSaveTimer: any;
+
+  constructor(private aiSettings: AiSettingsService, private db: DbService) {}
 
   ngOnInit(): void {
     this.settings = this.aiSettings.getSettings();
+    this.syncConfig = this.db.getSyncConfig();
   }
 
   get selectedProvider(): ProviderOption {
@@ -99,5 +106,18 @@ export class SettingsPanel implements OnInit {
     this.settings.azureEndpoint = '';
     this.settings.localEndpoint = 'http://localhost:11434/api/generate';
     this.settings.localModel = 'llama3.2';
+  }
+
+  saveSync(): void {
+    this.db.saveSyncConfig(this.syncConfig);
+    this.syncSaved = true;
+    clearTimeout(this.syncSaveTimer);
+    this.syncSaveTimer = setTimeout(() => (this.syncSaved = false), 2500);
+  }
+
+  get syncStatus(): string {
+    const cfg = this.syncConfig;
+    if (!cfg.enabled || !cfg.url) return 'disabled';
+    return this.db.isSyncing ? 'active' : 'pending';
   }
 }

@@ -4,7 +4,7 @@ An AI-powered reading and math practice app for K–8 students, built with Angul
 
 ## Overview
 
-LearnWise supports two roles — **students** and **teachers/parents** — with role-based dashboards and an auth guard protecting each route. All data is persisted in `localStorage` (no backend required). AI features are powered by a configurable AI provider (Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or a local Ollama model) called directly from the browser.
+LearnWise supports two roles — **students** and **teachers/parents** — with role-based dashboards and an auth guard protecting each route. Data is stored locally via **PouchDB** (IndexedDB) and can optionally sync to a **CouchDB** server for multi-device persistence. AI features are powered by a configurable AI provider (Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, or a local Ollama model) called directly from the browser.
 
 Students must provide a teacher/parent code when registering — this links them to the correct class automatically.
 
@@ -58,7 +58,7 @@ Students must provide a teacher/parent code when registering — this links them
 src/app/
 ├── components/
 │   ├── nav/                    # Shared nav bar
-│   └── settings-panel/         # AI provider settings UI
+│   └── settings-panel/         # AI provider + CouchDB sync settings UI
 ├── guards/auth-guard.ts        # Role-based route protection
 ├── pages/
 │   ├── login/                  # Landing, login, register, demo login
@@ -68,7 +68,8 @@ src/app/
     ├── ai-settings.service.ts  # AI provider config (persisted to localStorage)
     ├── api.ts                  # AI integration: passage/math generation, grading, feedback
     ├── auth.ts                 # Login, register, logout, demo login
-    └── storage.ts              # localStorage wrapper, session saving, badge logic
+    ├── db.service.ts           # PouchDB wrapper + live CouchDB sync
+    └── storage.ts              # Data access layer (reads/writes via PouchDB + localStorage)
 
 public/
 ├── sw.js                       # Custom service worker (offline support)
@@ -118,6 +119,25 @@ AI provider settings are configured in-app via the **Settings panel** (accessibl
 
 ---
 
+## Data Storage & Sync
+
+### PouchDB (local, always-on)
+
+All user data is stored in **PouchDB** (backed by IndexedDB) so the app works fully offline. On first launch, any existing `localStorage` data is migrated automatically.
+
+### CouchDB sync (optional)
+
+Configure a CouchDB server URL in **Settings → Data Sync** to enable live bidirectional sync. Changes made on any device propagate automatically whenever the device is online. Credentials are stored only in browser `localStorage` and sent directly to your CouchDB server.
+
+Self-hosting options:
+- **CouchDB** — `docker run -p 5984:5984 couchdb`
+- **Cloudant** — managed CouchDB-compatible service (IBM)
+- **DigitalOcean** / any VPS running CouchDB
+
+> Create a database named `learnwise` on your server, enable CORS for your app's origin, and paste the URL (including the database name) into the sync settings.
+
+---
+
 ## PWA / Offline Support
 
 LearnWise is installable as a Progressive Web App on desktop and mobile. After the first load, the app shell (HTML, JS, CSS, icons) is served from the service worker cache so the app opens offline. AI features (passage/problem generation, grading) still require a network connection.
@@ -126,6 +146,7 @@ The service worker (`public/sw.js`) uses:
 - **Navigation requests** — network-first, falls back to cached `index.html` for SPA routing
 - **Same-origin assets** — cache-first with background refresh (stale-while-revalidate)
 - **External AI API calls** — always bypassed (never cached)
+- **CouchDB/PouchDB sync endpoints** — always bypassed (never cached)
 
 > **Icon note:** Icons use SVG format (`sizes: "any"`), which is supported by Chrome, Edge, and Firefox. For broader compatibility (older Android, iOS Add to Home Screen thumbnails) replace `/public/icons/icon.svg` with PNG exports at 192×192 and 512×512.
 
@@ -147,6 +168,8 @@ The service worker (`public/sw.js`) uses:
 - **Angular 21.2** — NgModule-based
 - **TypeScript 5.9**
 - **RxJS 7.8**
+- **PouchDB** — offline-first local database (IndexedDB)
+- **CouchDB** — optional server-side sync target
 - **Prettier** — code formatting
 - **Custom service worker** — PWA / offline support
 - **Multi-provider AI** — Claude, OpenAI, Gemini, Azure OpenAI, DeepSeek, Ollama
