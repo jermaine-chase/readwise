@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 
-type View = 'landing' | 'login' | 'register';
+type View = 'landing' | 'login' | 'register' | 'forgot';
 
 @Component({
   standalone: false,
@@ -16,6 +16,7 @@ export class Login implements OnInit {
 
   loginEmail = ''; loginPassword = ''; loginErr = '';
   regName = ''; regEmail = ''; regPassword = ''; regClassCode = ''; regErr = '';
+  forgotEmail = ''; forgotNewPassword = ''; forgotConfirm = ''; forgotErr = ''; forgotSuccess = false; forgotFound = false;
 
   constructor(private auth: AuthService, private router: Router) {}
 
@@ -24,7 +25,11 @@ export class Login implements OnInit {
     if (user) this.router.navigate([user.role === 'teacher' ? '/teacher' : '/student']);
   }
 
-  show(v: View) { this.view = v; this.loginErr = ''; this.regErr = ''; }
+  show(v: View) {
+    this.view = v;
+    this.loginErr = ''; this.regErr = '';
+    this.forgotEmail = ''; this.forgotNewPassword = ''; this.forgotConfirm = ''; this.forgotErr = ''; this.forgotSuccess = false; this.forgotFound = false;
+  }
 
   doLogin() {
     this.loginErr = '';
@@ -45,4 +50,22 @@ export class Login implements OnInit {
   }
 
   demoLogin(role: 'student' | 'teacher') { this.auth.demoLogin(role); }
+
+  lookupForgotEmail() {
+    this.forgotErr = '';
+    if (!this.forgotEmail) { this.forgotErr = 'Please enter your email.'; return; }
+    const users = this.auth.getUserByEmail(this.forgotEmail);
+    if (!users) { this.forgotErr = 'No account found with that email.'; return; }
+    this.forgotFound = true;
+  }
+
+  doResetPassword() {
+    this.forgotErr = '';
+    if (!this.forgotNewPassword || !this.forgotConfirm) { this.forgotErr = 'Please fill in both password fields.'; return; }
+    if (this.forgotNewPassword.length < 6) { this.forgotErr = 'Password must be at least 6 characters.'; return; }
+    if (this.forgotNewPassword !== this.forgotConfirm) { this.forgotErr = 'Passwords do not match.'; return; }
+    const ok = this.auth.resetPassword(this.forgotEmail, this.forgotNewPassword);
+    if (!ok) { this.forgotErr = 'Could not reset password. Please try again.'; return; }
+    this.forgotSuccess = true;
+  }
 }

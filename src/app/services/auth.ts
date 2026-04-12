@@ -48,6 +48,21 @@ export class AuthService {
     this.router.navigate(['']);
   }
 
+  getUserByEmail(email: string): import('./storage').User | null {
+    const users = this.storage.getUsers();
+    return Object.values(users).find(u => u.email === email) ?? null;
+  }
+
+  resetPassword(email: string, newPassword: string): boolean {
+    const users = this.storage.getUsers();
+    const user = Object.values(users).find(u => u.email === email);
+    if (!user) return false;
+    user.password = newPassword;
+    users[user.id] = user;
+    this.storage.saveUsers(users);
+    return true;
+  }
+
   demoLogin(role: 'student' | 'teacher'): void {
     const email = role + '@demo.learnwise.app';
     const password = 'demo1234';
